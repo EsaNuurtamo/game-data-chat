@@ -1,0 +1,24 @@
+{
+  "name": "mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@game-data/db": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.20.2",
+    "agents": "0.2.19",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241022.0",
+    "typescript": "^5.4.0",
+    "wrangler": "^4.45.3"
+  }
+}

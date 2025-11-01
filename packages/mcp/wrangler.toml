@@ -1,0 +1,22 @@
+name = "game-data-chat-mcp"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[dev]
+port = 8787
+
+[durable_objects]
+bindings = [{ name = "MCP_OBJECT", class_name = "GameDataAgent" }]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GameDataAgent"]
+
+[observability]
+enabled = true
+
+[[kv_namespaces]]
+binding = "RAWG_CACHE"
+id = "00000000000000000000000000000000"
+preview_id = "11111111111111111111111111111111"

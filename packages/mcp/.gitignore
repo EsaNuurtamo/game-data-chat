@@ -1,0 +1,12 @@
+# Cloudflare Wrangler artifacts
+.wrangler/
+worker/
+
+# Environment variables
+.dev.vars
+
+# Build output
+dist/
+
+# Misc
+*.local
