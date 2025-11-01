@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-export const DEFAULT_PAGE_SIZE = 100;
+export const DEFAULT_PAGE_SIZE = 40;
 export const DATASET_VERSION = "v1";
 export const DATASET_NAMESPACE_PREFIX = `rawg:games:${DATASET_VERSION}`;
-export const DEFAULT_DATASET_TTL_MS = 1000 * 60 * 60 * 6; // 6 hours
+export const DEFAULT_DATASET_TTL_MS = 1000 * 60 * 60; // 1 hour
 
 /**
  * RAWG game summary subset used across the stack.
@@ -14,23 +14,29 @@ export const gameSummarySchema = z.object({
   name: z.string(),
   released: z.string().nullable(),
   metacritic: z.number().nullable(),
-  genres: z.array(
-    z.object({
-      id: z.number(),
-      slug: z.string(),
-      name: z.string()
-    })
-  ),
-  platforms: z.array(
-    z.object({
-      platform: z.object({
+  genres: z
+    .array(
+      z.object({
         id: z.number(),
         slug: z.string(),
-        name: z.string()
+        name: z.string(),
       })
-    })
-  ),
-  rating: z.number().nullable()
+    )
+    .nullish()
+    .transform((genres) => genres ?? []),
+  platforms: z
+    .array(
+      z.object({
+        platform: z.object({
+          id: z.number(),
+          slug: z.string(),
+          name: z.string(),
+        }),
+      })
+    )
+    .nullish()
+    .transform((platforms) => platforms ?? []),
+  rating: z.number().nullable(),
 });
 
 export type GameSummary = z.infer<typeof gameSummarySchema>;
@@ -41,7 +47,7 @@ export const fetchFiltersSchema = z.object({
   releasedFrom: z.string().optional(),
   releasedTo: z.string().optional(),
   page: z.number().min(1).max(40).optional(),
-  pageSize: z.number().min(1).max(DEFAULT_PAGE_SIZE).optional()
+  pageSize: z.number().min(1).max(DEFAULT_PAGE_SIZE).optional(),
 });
 
 export type FetchFilters = z.infer<typeof fetchFiltersSchema>;
@@ -63,13 +69,13 @@ export const datasetMetadataSchema = z.object({
     releasedFrom: z.string().optional(),
     releasedTo: z.string().optional(),
     page: z.number(),
-    pageSize: z.number()
+    pageSize: z.number(),
   }),
   page: z.number(),
   totalPages: z.number(),
   fetchedAt: z.string(),
   expiresAt: z.string(),
-  items: z.array(gameSummarySchema)
+  items: z.array(gameSummarySchema),
 });
 
 export type DatasetMetadata = z.infer<typeof datasetMetadataSchema>;
@@ -95,7 +101,7 @@ export interface KvDatasetRecord extends DatasetMetadata {
 }
 
 export const kvDatasetRecordSchema = datasetMetadataSchema.extend({
-  version: z.string()
+  version: z.string(),
 });
 
 const textEncoder = new TextEncoder();
@@ -135,9 +141,15 @@ function expandFilterValues(values?: string[]): string[] {
   return expanded;
 }
 
-export function canonicalizeFilters(filters: FetchFilters): CanonicalizedFilters {
-  const genres = expandFilterValues(filters.genres).map(normalizeFilterValue).sort();
-  const platforms = expandFilterValues(filters.platforms).map(normalizeFilterValue).sort();
+export function canonicalizeFilters(
+  filters: FetchFilters
+): CanonicalizedFilters {
+  const genres = expandFilterValues(filters.genres)
+    .map(normalizeFilterValue)
+    .sort();
+  const platforms = expandFilterValues(filters.platforms)
+    .map(normalizeFilterValue)
+    .sort();
 
   return {
     genres,
@@ -145,7 +157,7 @@ export function canonicalizeFilters(filters: FetchFilters): CanonicalizedFilters
     releasedFrom: filters.releasedFrom,
     releasedTo: filters.releasedTo,
     page: filters.page ?? 1,
-    pageSize: DEFAULT_PAGE_SIZE
+    pageSize: DEFAULT_PAGE_SIZE,
   };
 }
 
@@ -165,7 +177,10 @@ export function buildPageKey(datasetKey: string, page: number): string {
   return `${datasetKey}:p${page}`;
 }
 
-export function shouldRefresh(dataset: DatasetMetadata, now: Date = new Date()): boolean {
+export function shouldRefresh(
+  dataset: DatasetMetadata,
+  now: Date = new Date()
+): boolean {
   return new Date(dataset.expiresAt).getTime() <= now.getTime();
 }
 
@@ -173,7 +188,7 @@ export function calculate({
   dataset,
   operation,
   field,
-  groupBy
+  groupBy,
 }: ExecuteCalculationInput): ExecuteCalculationResult {
   const items = dataset.items;
   if (items.length === 0) {
@@ -202,7 +217,7 @@ export function calculate({
       const sum = numeric.reduce((acc, value) => acc + value, 0);
       return {
         itemsProcessed: items.length,
-        value: sum / numeric.length
+        value: sum / numeric.length,
       };
     }
     case "group_avg": {
@@ -241,7 +256,7 @@ export function calculate({
       const averages = Array.from(buckets.entries()).map(([label, bucket]) => ({
         label,
         average: bucket.count > 0 ? bucket.sum / bucket.count : null,
-        count: bucket.count
+        count: bucket.count,
       }));
 
       return { itemsProcessed: items.length, value: averages };
