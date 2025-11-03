@@ -8,7 +8,9 @@
     "dev:mcp": "pnpm --filter mcp dev",
     "typecheck": "pnpm run -r typecheck",
     "lint": "pnpm --filter app lint",
-    "build": "pnpm run -r build"
+    "build": "pnpm run -r build",
+    "fetch:rawg": "node scripts/rawg-fetch.mjs",
+    "get-slugs": "node scripts/rawg-get-slugs.mjs"
   },
   "devDependencies": {
     "typescript": "^5.4.0"

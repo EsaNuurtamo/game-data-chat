@@ -44,6 +44,7 @@ export type GameSummary = z.infer<typeof gameSummarySchema>;
 export const fetchFiltersSchema = z.object({
   genres: z.array(z.string()).optional(),
   platforms: z.array(z.string()).optional(),
+  parentPlatforms: z.array(z.string()).optional(),
   releasedFrom: z.string().optional(),
   releasedTo: z.string().optional(),
   page: z.number().min(1).max(40).optional(),

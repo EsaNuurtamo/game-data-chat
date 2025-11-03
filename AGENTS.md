@@ -1,45 +1,51 @@
-Game Data Chat – Agent Notes
-============================
+# Game Data Chat – Agent Notes
 
-Objective
----------
-- Build a RAWG-backed MCP server deployed on Cloudflare Workers and expose `fetch_game_data` plus `execute_calculation`.
-- Ship a Next.js-based UI (Cloudflare Pages/Functions) that runs the agent loop with OpenAI server-side and surfaces evaluation results.
-- Share datamodels/utilities in a reusable `db` package that abstracts Cloudflare KV today, optional SQL later.
+Centralized guidance for anyone iterating on the RAWG analytics agent, MCP worker, or supporting UI.
 
-Architecture Decisions
-----------------------
-- Monorepo managed with `pnpm` workspaces.
-- Packages:
-  - `packages/app`: Next.js 16 App Router + Tailwind UI, server actions host the agent loop with OpenAI Responses API.
-  - `packages/mcp`: Cloudflare Worker implementing MCP spec (`@modelcontextprotocol/sdk`), caches RAWG responses, exposes tool endpoints.
-  - `packages/db`: Shared TypeScript + Zod schemas, storage helpers (initially KV-based) reused by both app and worker.
-- Shared `tsconfig.base.json` at repo root for consistent compiler settings.
-- Cloudflare KV planned as primary cache layer; interface in `db` designed so we can swap to Postgres later.
+## Quick Links
 
-Repository Layout
------------------
-- `package.json` (root): workspace scripts (`dev`, `dev:app`, `dev:mcp`, `typecheck`, `lint`, `build`).
-- `pnpm-workspace.yaml`: includes everything under `packages/*`.
-- `packages/app`: generated via `create-next-app`, depends on `@game-data/db`.
-- `packages/mcp`: Worker entry at `src/index.ts`, exposes a JSON-RPC MCP server at `/mcp` (`wrangler dev`).
-- `packages/db`: Exports Zod schemas (`gameSummarySchema`, filter and calculation types).
+- [`README.md`](./README.md) – Project overview, local dev instructions, and roadmap.
+- [`INSTRUCTIONS.md`](./INSTRUCTIONS.md) – Original Supercell assessment brief.
+- [`docs/debug-panel.md`](./docs/debug-panel.md) – Planned debugging & observability panel.
+- [`docs/calculation-query-language.md`](./docs/calculation-query-language.md) – Roadmap for richer calculations & traces.
+- [`plans/local-first-shot.md`](./plans/local-first-shot.md) – Current implementation priorities.
 
-Local Development Workflow
---------------------------
-- Install deps: `pnpm install`.
-- Type-check everything: `pnpm typecheck`.
-- Run Next dev server: `pnpm dev:app` (defaults to port 3000).
-- Run MCP worker locally: `pnpm dev:mcp` (served via `wrangler dev` on port 8787).
-- Lint UI code: `pnpm lint`.
-- Detailed environment setup steps live in `docs/local-dev.md`.
+## Architecture Snapshot
 
-Immediate Next Steps
---------------------
-- Monitor MCP protocol changes and consider upgrading to Streamable HTTP transport when needed.
-- Expand calculations (percentiles, medians) and caching for multi-page datasets.
-- Flesh out UI evaluation assertions (structured diffs vs. plain text).
+| Package | Purpose |
+| --- | --- |
+| `packages/mcp` | Cloudflare Worker MCP server exposing `fetch_game_data` + `execute_calculation`, uses Cloudflare KV for caching. |
+| `packages/app` | Next.js 16 agent UI running OpenAI Responses API server-side with support for evaluation prompts. |
+| `packages/db` | Shared schemas, filter canonicalization, cache helpers; designed to swap storage backends later. |
 
-Active Plans
-------------
-- See `plans/local-first-shot.md` for the current implementation roadmap aimed at a locally runnable vertical slice.
+Shared configuration lives in `tsconfig.base.json`; `pnpm-workspace.yaml` wires the repo as a single workspace.
+
+## Local Development Checklist
+
+1. Install deps: `pnpm install`
+2. Configure secrets:
+   - `packages/mcp/.dev.vars` → `RAWG_API_KEY=…`
+   - `packages/app/.env.local` → `OPENAI_API_KEY`, optional `OPENAI_MODEL`, `MCP_BASE_URL`
+3. Run dev servers:
+   - `pnpm dev:mcp` (Worker at http://127.0.0.1:8787)
+   - `pnpm dev:app` (UI at http://localhost:3000)
+4. Optional utilities:
+   - `pnpm fetch:rawg <resource>` → download RAWG datasets to `data/`
+   - `pnpm get-slugs <resource>` → derive slug lists for prompts or tests
+
+Refer to `README.md` for full setup details and command explanations.
+
+## Operational Best Practices
+
+- **Trace Every Step** – Instrument tool calls and agent loops so runs can be replayed in the upcoming debugging panel. Structured traces keep investigations fast. citeturn0search0
+- **Monitor Latency & Cost** – Track token usage, RAWG retries, and cache effectiveness. This prevents runaway loops and aligns with industry guidance on LLM observability. citeturn0search1turn0search2
+- **Keep Golden Runs Fresh** – Update evaluation prompts and expected traces whenever tools change; compare runs via the planned golden diff view. citeturn0search7
+- **Export Traces When Needed** – Use OTEL-compatible payloads so you can push data to external platforms (LangSmith, Datadog) for deeper analysis. citeturn0search6turn0reddit17
+
+## Immediate Focus Areas
+
+- Implement the debugging panel features in `docs/debug-panel.md`.
+- Extend calculation DSL & trace output per `docs/calculation-query-language.md`.
+- Harden evaluation assertions and surface regressions in the UI.
+
+Follow the plan in `plans/local-first-shot.md` for sequencing. Update this document as new workflows or tooling tips emerge.
