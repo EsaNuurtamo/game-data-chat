@@ -159,8 +159,8 @@ async function fetchAll({
     const results = Array.isArray(payload)
       ? payload
       : Array.isArray(payload?.results)
-      ? payload.results
-      : null;
+        ? payload.results
+        : null;
     if (!Array.isArray(results)) {
       throw new Error(
         `Unexpected response shape for ${resourcePath}. Expected an array of results.`
@@ -244,7 +244,7 @@ async function main() {
   const finishedAt = new Date();
 
   const identifier = toSlugIdentifier(resourcePath);
-  const outputDir = path.resolve("data");
+  const outputDir = path.resolve(".data");
   const jsonPath = path.join(outputDir, `rawg-${identifier}.json`);
 
   await fs.mkdir(outputDir, { recursive: true });

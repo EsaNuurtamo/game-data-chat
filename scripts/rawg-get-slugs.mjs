@@ -174,10 +174,9 @@ async function main() {
   }
 
   const identifier = toSlugIdentifier(resourcePath);
-  const dataDir = path.resolve("data");
+  const dataDir = path.resolve(".data");
   const jsonPath =
-    options.input ??
-    path.join(dataDir, `rawg-${identifier}.json`);
+    options.input ?? path.join(dataDir, `rawg-${identifier}.json`);
 
   let payload;
   try {
@@ -193,10 +192,10 @@ async function main() {
   const items = Array.isArray(payload?.items)
     ? payload.items
     : Array.isArray(payload?.results)
-    ? payload.results
-    : Array.isArray(payload)
-    ? payload
-    : null;
+      ? payload.results
+      : Array.isArray(payload)
+        ? payload
+        : null;
 
   if (!Array.isArray(items) || items.length === 0) {
     console.error(

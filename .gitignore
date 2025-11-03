@@ -1,7 +1,8 @@
 # Node / package managers
 node_modules/
 .pnpm-store/
-
+.tmp
+.data
 # Environment files
 .env
 .env.*
