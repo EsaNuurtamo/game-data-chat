@@ -40,6 +40,7 @@ Create `packages/mcp/.dev.vars`:
 cd packages/mcp
 cat <<'EOF' > .dev.vars
 RAWG_API_KEY=your_rawg_api_key
+MCP_API_KEYS=local-dev-key
 EOF
 ```
 
@@ -52,6 +53,7 @@ OPENAI_API_KEY=your_openai_key
 # Optional: override the default model (defaults to gpt-4o-mini)
 # OPENAI_MODEL=gpt-4o-mini
 MCP_BASE_URL=http://127.0.0.1:8787
+MCP_API_KEY=local-dev-key
 EOF
 ```
 

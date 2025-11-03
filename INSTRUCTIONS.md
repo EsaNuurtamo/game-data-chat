@@ -1,169 +1,105 @@
-Supercell Technical Assessment: Game Analytics MCP Server
+# Supercell Technical Assessment: Game Analytics MCP Server
 
-Supercell_LLM_Engineer_Assignme…
+> **Note:** The code, implementation approaches, and technical solutions you provide as part of this assessment belong to you. Supercell will only use your submission to evaluate your technical skills and determine if you would be a good fit for a position at Supercell.
 
-Note: The code, implementation approaches, and technical solutions that you provide as part of this assessment belong to you. Supercell will only use your submission to evaluate your technical skills and determine if you would be a good fit for a position at Supercell.
+## Why This Challenge?
 
-Supercell_LLM_Engineer_Assignme…
+- **Tool agnostic:** Python rules AI/ML, but the best engineers pick the right tool. Cloudflare has first-class support for remote MCP servers, and TypeScript/JavaScript shines here.
+- **Production first:** By the end, you’ll have a **fully deployed** agent solution with a remote MCP server.
+- **Embrace constraints:** Serverless limits on Cloudflare create real-world tradeoffs; show how you turn constraints into design wins.
+- **Real systems:** MCP is fast becoming the standard for LLM-to-tool communication. You’ll work with real APIs and production-like constraints.
 
-Why This Challenge?
+## The Task
 
-Supercell_LLM_Engineer_Assignme…
+Build an MCP server with tools for fetching and analyzing video-game data from the **RAWG API**. Create a UI where an LLM agent can use your tools to answer analytical questions about games.
 
-Tool Agnostic: While Python dominates AI/ML, great engineers use the right tool for the job. Cloudflare has first-class support for remote MCP servers and TypeScript/JavaScript excels here.
+- **Time:** 4–8 hours
+- **Deploy:** Cloudflare (free tier)
 
-Production First: By the end of this task, you’ll have a fully deployed agent solution with a remote MCP server.
+## Requirements
 
-Embrace Constraints: Cloudflare’s serverless architecture creates interesting challenges; we want to see how you turn constraints into creative solutions.
+### 1) MCP Tools
 
-Real Systems: This isn’t a toy problem. MCP is becoming the standard for LLM-to-tool communication, and what you build here could be the foundation for production AI systems. You’ll work with real APIs and real constraints—just like production.
+#### `fetch_game_data`
 
-Supercell_LLM_Engineer_Assignme…
+- Fetches game data from the RAWG API
+- Supports filters: genre, platform, time period
+- Returns raw data for downstream calculations
 
-The Task
+#### `execute_calculation`
 
-Supercell_LLM_Engineer_Assignme…
+- Performs numerical computations on fetched data
+- Returns calculated results (e.g., averages, counts, comparisons)
 
-Build an MCP server with tools for fetching and analyzing video-game data from the RAWG API. Create a UI where an LLM agent can use your tools to answer analytical questions about games.
+The LLM should orchestrate these tools to answer questions.
 
-Time: 4–8 hours
+### 2) Built-in Evaluation Display
 
-Deploy: Cloudflare (free tier)
+Your app **must** demonstrate correctness. Include a UI section (even a simple static block) that shows how you validated calculations.
 
-Supercell_LLM_Engineer_Assignme…
+#### Example Queries Your System Should Handle
 
-Requirements
+1. **Average Metacritic for PC games in Q1 2024**
+   - Fetch PC games released Jan–Mar 2024
+   - Compute the average Metacritic score
 
-1. MCP Tools
+2. **Genre with most highly rated games in 2023**
+   - Group games by genre for 2023
+   - Compute average ratings per genre
+   - Return the top genre
 
-Supercell_LLM_Engineer_Assignme…
+3. **PlayStation vs Xbox exclusives comparison**
+   - Fetch exclusives by platform
+   - Compare average ratings
+   - Return a clear comparison
 
-fetch_game_data
+## Deliverable
 
-Gets game data from the RAWG API
+Provide **one URL** to your deployed app that:
 
-Filters by genre, platform, time period
+- Has a UI to interact with your MCP server (chat, form, etc.)
+- Displays evaluation metrics
+- Actually works
 
-Returns raw data for processing
+Provide **one link** to your GitHub repository containing:
 
-execute_calculation
+- Source code
+- A README that explains:
+  - Your approach and architecture
+  - Constraints/limitations you hit and how you handled them
+  - Rough time breakdown
+  - Any extra details useful for discussion
 
-Handles numerical computations
+**Example:**
 
-Returns calculated results
+- App: `https://your-app.cloudflare.com`
+- Code: `https://github.com/yourusername/your-app`
 
-The LLM should be able to orchestrate these tools to answer questions.
+## Setup
 
-Supercell_LLM_Engineer_Assignme…
+1. Get a RAWG API key: [https://rawg.io/apidocs](https://rawg.io/apidocs)
+2. Deploy on Cloudflare.
 
-2. Built-in Evaluation Display
+## Evaluation
 
-Supercell_LLM_Engineer_Assignme…
+We will:
 
-Your app must demonstrate correctness. Build something into your UI (a simple static display is fine) that proves your calculations are accurate.
-
-Example Queries Your System Should Handle
-
-“What’s the average Metacritic score for PC games released in Q1 2024?”
-
-Fetch PC games from Jan–Mar 2024
-
-Calculate average Metacritic score
-
-“Which genre had the most highly-rated games in 2023?”
-
-Fetch games by genre for 2023
-
-Calculate average ratings per genre
-
-Compare and return the winner
-
-“How do PlayStation exclusive ratings compare to Xbox exclusives?”
-
-Fetch games for each platform
-
-Calculate and compare average ratings
-
-Return the comparison
-
-Supercell_LLM_Engineer_Assignme…
-
-Deliverable
-
-Supercell_LLM_Engineer_Assignme…
-
-Provide one URL to your deployed app that:
-
-Has a UI to interact with your MCP server (chat interface, form, etc.)
-
-Displays evaluation metrics
-
-Actually works
-
-Provide one link to your GitHub repository containing:
-
-Your source code
-
-A README that explains:
-
-How you approached the problem
-
-Challenges/limitations you encountered
-
-Roughly how you spent your time
-
-Anything else relevant for the discussion
-
-Example:
-
-App: https://your-app.cloudflare.com
-
-Code: https://github.com/yourusername/your-app
-
-Supercell_LLM_Engineer_Assignme…
-
-Setup
-
-Supercell_LLM_Engineer_Assignme…
-
-Get a RAWG API key: https://rawg.io/apidocs
-
-Deploy on Cloudflare
-
-Evaluation
-
-Supercell_LLM_Engineer_Assignme…
-
-We’ll visit your URL and:
-
-Test your tools with different queries
-
-Check your self-reported accuracy
-
-Verify calculations are correct
+1. Use your UI to run various queries
+2. Check your self-reported accuracy
+3. Verify calculations are correct
 
 We’ll review your code for:
 
-Clean architecture and implementation
+- Clean architecture
+- Sound calculation approach
+- Overall code quality
 
-How you solved the calculation challenge
+**Bonus points for:**
 
-Overall code quality
+- Clever calculation design
+- Client-to-server authentication
+- Excellent UX
 
-Bonus points for:
+## What We’re Looking For
 
-Creative solutions to the calculation tool
-
-Client-to-server authentication
-
-Exceptional user experience
-
-What We’re Looking For
-
-Supercell_LLM_Engineer_Assignme…
-
-Show us you’re a builder. We care more about working systems than perfect code. A deployed solution that handles 80% of queries well beats undeployed code that would theoretically handle 100%.
-
-You’ll likely encounter constraints and limitations—document these in your README, as we’ll discuss your approach in detail.
-
-Good luck!
+Show that you’re a **builder**. A deployed system that handles 80% of cases beats undeployed perfection. Document constraints and choices in your README—we’ll dig into them in the discussion.

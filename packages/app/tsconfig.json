@@ -3,7 +3,7 @@
   "compilerOptions": {
     "allowJs": true,
     "noEmit": true,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "incremental": true,
     "plugins": [
       {
@@ -11,8 +11,11 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
-    }
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "isolatedModules": true
   },
   "include": [
     "next-env.d.ts",
@@ -22,5 +25,7 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

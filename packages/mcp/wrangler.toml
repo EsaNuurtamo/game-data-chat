@@ -18,5 +18,4 @@ enabled = true
 
 [[kv_namespaces]]
 binding = "RAWG_CACHE"
-id = "00000000000000000000000000000000"
-preview_id = "11111111111111111111111111111111"
+id = "535faa9a81d146f78e33ed10363d7850"
