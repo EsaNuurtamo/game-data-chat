@@ -8,31 +8,33 @@ import { ChatInputForm } from "@/components/chat-input-form";
 import { MessageParts } from "@/components/message-parts";
 
 const SUGGESTED_PROMPTS = [
-  "Which genre had the best average Metacritic score in 2024?",
-  "Compare PlayStation and Xbox exclusives on user ratings.",
-  "What were the standout PC RPG releases last year?",
-  "How many Switch games scored above 85 in 2023?",
+  "What genre had most games in March 2025?",
+  "What was the average rating for PS5 games in Q1 of 2023?",
+  "Which platform had better rated games in 2024, Ps5 or Xbox series X?",
+  "How does exclusive games compare on playstation platforms compared to xbox?",
 ];
 
-function deriveStatus(messages: UIMessage[], status: string): string {
-  if (status === "streaming") {
-    return "Crafting the response…";
-  }
+function deriveStatus(messages: UIMessage[], status: string): string | null {
   const reversed = [...messages].reverse();
   for (const message of reversed) {
     for (const part of [...message.parts].reverse()) {
-      if (part.type === "tool-result") {
-        return "Going through the stats…";
+      console.log(part.type);
+      if (part.type === "text") {
+        console.log(part.text);
       }
-      if (part.type === "tool-call") {
-        return "Getting data…";
+      if (
+        part.type === "dynamic-tool" &&
+        message.role === "assistant" &&
+        status === "streaming"
+      ) {
+        return "Thinking...";
       }
     }
   }
   if (status === "submitted") {
     return "Connecting to the agent…";
   }
-  return "Ready for your next question";
+  return null;
 }
 
 export default function Home() {
@@ -97,58 +99,34 @@ export default function Home() {
     if (!trimmed || isStreaming) {
       return;
     }
-    await sendMessage({ text: trimmed });
     setInput("");
+    await sendMessage({ text: trimmed });
   };
 
   const handleSuggestion = useCallback(
-    async (prompt: string) => {
+    (prompt: string) => {
       if (isStreaming) {
         return;
       }
-      setInput("");
-      await sendMessage({ text: prompt });
+      setInput(prompt);
     },
-    [isStreaming, sendMessage]
+    [isStreaming]
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#05060a] via-[#090b12] to-[#0b1320] text-zinc-100">
-      <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-12 lg:gap-10">
-        <header className="space-y-3 text-center">
+    <div className="min-h-screen h-screen bg-gradient-to-b from-[#05060a] via-[#090b12] to-[#0b1320] text-zinc-100">
+      <main className="mx-auto h-full w-full max-w-3xl flex-col gap-8 pt-6 px-6 lg:gap-10">
+        <header className="space-y-3 text-center h-1/7">
           <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-300">
             Game Data Lab
           </div>
           <h1 className="text-4xl font-semibold tracking-tight text-zinc-50 md:text-5xl">
-            Ask about the games that matter
+            Chat with RAWG.io data
           </h1>
-          <p className="mx-auto max-w-2xl text-sm text-zinc-400 md:text-base">
-            Your personal analyst for RAWG game data. The agent fetches live
-            datasets and runs calculations so you can focus on the insights.
-          </p>
         </header>
 
-        <section className="rounded-3xl border border-zinc-800/70 bg-zinc-950/60 p-6 shadow-2xl shadow-indigo-500/10 backdrop-blur">
-          <div className="mb-6 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-sm text-zinc-400">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-indigo-400" />
-              </span>
-              {statusMessage}
-            </div>
-            {error ? (
-              <button
-                type="button"
-                className="text-xs font-semibold text-rose-300 hover:text-rose-200"
-                onClick={() => clearError()}
-              >
-                Dismiss error
-              </button>
-            ) : null}
-          </div>
-
-          {messages.length === 0 && (
+        <section className="rounded-3xl min-h-6/7 h-6/7 flex flex-col justify-end border border-zinc-800/70 bg-zinc-950/60 p-6 shadow-2xl shadow-indigo-500/10 backdrop-blur">
+          {messages.length === 0 && input.length === 0 && (
             <div className="mb-5 flex flex-wrap gap-2">
               {SUGGESTED_PROMPTS.map((prompt) => (
                 <button
@@ -164,11 +142,34 @@ export default function Home() {
             </div>
           )}
 
-          <div className="mb-6 space-y-4 max-h-[50vh] overflow-y-auto pr-1">
-            {transcript.length === 0 ? null : (
+          {transcript.length > 0 && (
+            <div className="mb-6 space-y-4 max-h-[50vh] overflow-y-auto pr-1">
               <ul className="space-y-4">{transcript}</ul>
-            )}
-          </div>
+            </div>
+          )}
+
+          {(statusMessage || error) && (
+            <div className="mb-6 items-center justify-between gap-3">
+              {statusMessage && (
+                <div className="flex items-center gap-2 text-sm text-zinc-400">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-indigo-400" />
+                  </span>
+                  {statusMessage}
+                </div>
+              )}
+              {error ? (
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-rose-300 hover:text-rose-200"
+                  onClick={() => clearError()}
+                >
+                  Dismiss error
+                </button>
+              ) : null}
+            </div>
+          )}
 
           <ChatInputForm
             value={input}

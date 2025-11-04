@@ -17,13 +17,10 @@ export function ChatInputForm({
   canStop,
   onChange,
   onSubmit,
-  onStop
+  onStop,
 }: ChatInputFormProps) {
   return (
-    <form onSubmit={onSubmit} className="rounded-2xl border border-zinc-700/60 bg-zinc-900/70 p-4 shadow-lg shadow-black/30 backdrop-blur">
-      <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-zinc-400" htmlFor="prompt">
-        Ask the agent
-      </label>
+    <form onSubmit={onSubmit}>
       <textarea
         id="prompt"
         name="prompt"

@@ -3,10 +3,15 @@ import {
   convertToModelMessages,
   validateUIMessages,
   stepCountIs,
-  type UIMessage
+  type UIMessage,
 } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
-import { withMcpClient } from "@/lib/mcp";
+import { createMcpClient } from "@/lib/mcp";
+
+const prompt = `You are an analytics assistant that must use the provided tools to answer questions about video games. 
+Explain your calculations clearly, but do not expose internal dataset identifiers in your response. If tool calls fail, report the failure.
+If you are asked about playstation, or xbox overall use parent platform filters.
+`;
 
 type RequestBody =
   | {
@@ -37,7 +42,7 @@ export async function POST(req: Request): Promise<Response> {
       return new Response(
         JSON.stringify({
           error: "Invalid UI messages payload",
-          details: error instanceof Error ? error.message : String(error ?? "")
+          details: error instanceof Error ? error.message : String(error ?? ""),
         }),
         { status: 400, headers: { "content-type": "application/json" } }
       );
@@ -50,15 +55,16 @@ export async function POST(req: Request): Promise<Response> {
         parts: [
           {
             type: "text",
-            text: body.prompt.trim()
-          }
-        ]
-      }
+            text: body.prompt.trim(),
+          },
+        ],
+      },
     ];
   } else {
     return new Response(
       JSON.stringify({
-        error: "Provide either `messages` (array) or a non-empty `prompt` string."
+        error:
+          "Provide either `messages` (array) or a non-empty `prompt` string.",
       }),
       { status: 400, headers: { "content-type": "application/json" } }
     );
@@ -68,7 +74,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!apiKey) {
     return new Response(
       JSON.stringify({
-        error: "OPENAI_API_KEY is not configured"
+        error: "OPENAI_API_KEY is not configured",
       }),
       { status: 500, headers: { "content-type": "application/json" } }
     );
@@ -78,42 +84,40 @@ export async function POST(req: Request): Promise<Response> {
   const openai = createOpenAI({ apiKey });
 
   try {
-    return await withMcpClient(async (client) => {
-      const tools = await client.tools();
-      const closeClient = async () => {
-        try {
-          await client.close();
-        } catch (closeError) {
-          console.warn("Failed to close MCP client", closeError);
-        }
-      };
+    const client = await createMcpClient();
+    const tools = await client.tools();
+    const closeClient = async () => {
+      try {
+        await client.close();
+      } catch (closeError) {
+        console.warn("Failed to close MCP client", closeError);
+      }
+    };
 
-      const result = await streamText({
-        model: openai(modelName),
-        system:
-          "You are an analytics assistant that must use the provided tools to answer questions about video games. Always cite the datasetId you used and explain your calculations. If tool calls fail, report the failure.",
-        messages: convertToModelMessages(messages),
-        tools,
-        maxRetries: 1,
-        temperature: 0.3,
-        stopWhen: stepCountIs(6),
-        onFinish: closeClient,
-        onError: async () => {
-          await closeClient();
-        },
-        onAbort: async () => {
-          await closeClient();
-        }
-      });
-
-      return result.toUIMessageStreamResponse({ originalMessages: messages });
+    const result = await streamText({
+      model: openai(modelName),
+      system: prompt,
+      messages: convertToModelMessages(messages),
+      tools,
+      maxRetries: 1,
+      temperature: 0.3,
+      stopWhen: stepCountIs(6),
+      onFinish: closeClient,
+      onError: async () => {
+        await closeClient();
+      },
+      onAbort: async () => {
+        await closeClient();
+      },
     });
+
+    return result.toUIMessageStreamResponse({ originalMessages: messages });
   } catch (error) {
     console.error("Agent invocation failed", error);
     return new Response(
       JSON.stringify({
         error: "Agent execution failed",
-        details: error instanceof Error ? error.message : String(error ?? "")
+        details: error instanceof Error ? error.message : String(error ?? ""),
       }),
       { status: 500, headers: { "content-type": "application/json" } }
     );
