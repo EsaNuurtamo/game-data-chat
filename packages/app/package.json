@@ -17,6 +17,7 @@
     "@ai-sdk/mcp": "^0.0.5",
     "@ai-sdk/openai": "^2.0.59",
     "@ai-sdk/react": "^2.0.86",
+    "@clerk/nextjs": "^6.34.1",
     "@game-data/db": "workspace:*",
     "ai": "^5.0.78",
     "next": "15.5.2",
