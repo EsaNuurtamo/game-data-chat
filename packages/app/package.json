@@ -18,6 +18,7 @@
     "@ai-sdk/openai": "^2.0.59",
     "@ai-sdk/react": "^2.0.86",
     "@clerk/nextjs": "^6.34.1",
+    "@clerk/themes": "^2.4.32",
     "@game-data/db": "workspace:*",
     "@tanstack/react-table": "^8.20.5",
     "ai": "^5.0.78",
