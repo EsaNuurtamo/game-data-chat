@@ -17,6 +17,6 @@
   "vars": {
     "MCP_BASE_URL": "https://game-data-chat-mcp.esa-nuurtamo.workers.dev/",
     "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_dXNhYmxlLWthdHlkaWQtNDIuY2xlcmsuYWNjb3VudHMuZGV2JA",
-    "OPENAI_MODEL": "gpt-4.1",
+    "OPENAI_MODEL": "gpt-5-mini",
   },
 }

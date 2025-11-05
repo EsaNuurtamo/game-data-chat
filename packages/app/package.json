@@ -19,11 +19,16 @@
     "@ai-sdk/react": "^2.0.86",
     "@clerk/nextjs": "^6.34.1",
     "@game-data/db": "workspace:*",
+    "@tanstack/react-table": "^8.20.5",
     "ai": "^5.0.78",
+    "lucide-react": "^0.468.0",
     "next": "15.5.2",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "zod": "^3.23.8"
+    "react-markdown": "^9.0.1",
+    "remark-gfm": "^4.0.0",
+    "zod": "^3.23.8",
+    "zustand": "^4.5.7"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251014.0",

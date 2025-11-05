@@ -9,6 +9,8 @@ port = 8787
 [durable_objects]
 bindings = [{ name = "MCP_OBJECT", class_name = "GameDataAgent" }]
 
+[vars]
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["GameDataAgent"]

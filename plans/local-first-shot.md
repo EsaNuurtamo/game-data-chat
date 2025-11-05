@@ -1,5 +1,7 @@
 # Local First Shot Plan
 
+> Status: ✅ Completed. This document captures the original vertical-slice effort; ongoing UX and streaming transparency work now lives in `plans/agent-step-streaming.md`.
+
 ## Goals
 - Deliver a locally runnable vertical slice using RAWG data via the MCP server.
 - Cache RAWG responses in Cloudflare KV with canonical keys shared between MCP and Next.js layers.

@@ -35,6 +35,10 @@ Shared configuration lives in `tsconfig.base.json`; `pnpm-workspace.yaml` wires 
 
 Refer to `README.md` for full setup details and command explanations.
 
+## Code Conventions
+
+- Component file names should use UpperCamelCase (e.g., `ThinkingStepsPanel.tsx`) so UI modules stay easy to locate across the workspace.
+
 ## Operational Best Practices
 
 - **Trace Every Step** – Instrument tool calls and agent loops so runs can be replayed in the upcoming debugging panel. Structured traces keep investigations fast. citeturn0search0
@@ -42,10 +46,22 @@ Refer to `README.md` for full setup details and command explanations.
 - **Keep Golden Runs Fresh** – Update evaluation prompts and expected traces whenever tools change; compare runs via the planned golden diff view. citeturn0search7
 - **Export Traces When Needed** – Use OTEL-compatible payloads so you can push data to external platforms (LangSmith, Datadog) for deeper analysis. citeturn0search6turn0reddit17
 
+## Proving Calculations to Users
+
+We need an experience that makes it obvious _why_ the agent’s answer is trustworthy.
+
+- **Inline “Activity” Summaries** – Keep the per-turn thinking panel visible with a single-click drawer that shows tool inputs/outputs, raw counts, and any cache usage. Highlight steps that contribute to the numeric answer so users can skim provenance fast.
+- **Calculation Receipts** – Plan a collapsible block beneath each answer that restates the query, filters applied, dataset counts, arithmetic performed (e.g., “Average Metacritic = sum(scores)/count”), and links to the underlying RAWG page when possible.
+- **Visual Diff Mode** – When an answer updates an earlier run, offer a tiny sparkline or badge (“Metacritic avg ↑ +2.1 since last run”) so change is obvious.
+- **Golden Run Badges** – For evaluation prompts, display a green/red badge next to the answer showing whether it matches the saved golden output. Clicking the badge opens the golden run diff view in the debug panel.
+- **Downloadable Trace Bundle** – Provide a “Download calculation bundle” button that exports the tool inputs/outputs and aggregate metrics as JSON. Power users can replay the exact flow elsewhere.
+
+Document progress on these items in `docs/debug-panel.md` and keep the design artifacts close to the code so future contributors know the bar for transparency.
+
 ## Immediate Focus Areas
 
-- Implement the debugging panel features in `docs/debug-panel.md`.
-- Extend calculation DSL & trace output per `docs/calculation-query-language.md`.
-- Harden evaluation assertions and surface regressions in the UI.
+- Implement the debugging panel features in `docs/debug-panel.md` (timeline + receipts first).
+- Extend calculation DSL & trace output per `docs/calculation-query-language.md`; ensure every new calculation shape exports the metadata needed for receipts.
+- Harden evaluation assertions and surface regressions in the UI (golden run badges + diff tooling).
 
 Follow the plan in `plans/local-first-shot.md` for sequencing. Update this document as new workflows or tooling tips emerge.

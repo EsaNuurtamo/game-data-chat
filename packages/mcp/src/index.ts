@@ -4,6 +4,7 @@ import { DATASET_VERSION } from "@game-data/db";
 import { GameDataAgent } from "./agent";
 import { isRequestAuthorized } from "./auth";
 import { VERSION } from "./constants";
+import { readDataset } from "./datasets";
 import type { WorkerEnv } from "./types";
 
 export { GameDataAgent } from "./agent";
@@ -52,6 +53,40 @@ export default {
           headers: { "content-type": "application/json" },
         }
       );
+    }
+
+    if (url.pathname.startsWith("/datasets/")) {
+      const datasetId = decodeURIComponent(url.pathname.replace(/^\/datasets\//, "").trim());
+      if (!datasetId) {
+        return new Response(JSON.stringify({ error: "Dataset id is required" }), {
+          status: 400,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      try {
+        const dataset = await readDataset(env.RAWG_CACHE, datasetId);
+        if (!dataset) {
+          return new Response(JSON.stringify({ error: "Dataset not found" }), {
+            status: 404,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        return new Response(JSON.stringify(dataset), {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+          },
+        });
+      } catch (error) {
+        console.error("Failed to read dataset", datasetId, error);
+        return new Response(JSON.stringify({ error: "Failed to read dataset" }), {
+          status: 500,
+          headers: { "content-type": "application/json" },
+        });
+      }
     }
 
     return new Response("Not Found", { status: 404 });

@@ -86,7 +86,7 @@ pnpm dev:app
 
 ## Known Limitations & Roadmap
 
-- **Debugging & Observability** – The UI lacks a proper debugging panel and trace visualization for tool calls. See `docs/debug-panel.md` for planned upgrades such as structured timelines, request/response inspection, and error surfacing.
+- **Debugging & Observability** – The UI lacks a proper debugging panel and trace visualization for tool calls. See `docs/debug-panel.md` for planned upgrades such as structured timelines, request/response inspection, receipts for each calculation, and change diffs for golden runs.
 - **Calculation Query Language** – Calculations are limited to averages/counts. `docs/calculation-query-language.md` outlines richer operations (percentiles, grouped stats) and the trace format needed for review.
 - **Deployment Guides** – Cloudflare deployment steps are still pending. Add instructions once Pages & Workers configs stabilize.
 - **Automated Evaluations** – Current evaluation panel uses deterministic prompts without assertions. Extend to structured checks with diff support.

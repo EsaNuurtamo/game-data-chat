@@ -13,10 +13,12 @@ This document outlines the planned debugging surface for Game Data Chat. The goa
 | Feature | Description | Notes |
 | --- | --- | --- |
 | Timeline view | Chronological list of agent steps, prompts, RAWG fetches, calculation runs, cache hits/misses. | Should pull structured spans via OTEL-compatible format so the same data can flow to external tools (LangSmith, Datadog). citeturn0search6turn0search2 |
-| Step detail drawer | Expand any trace to inspect request/response payloads (redacted secrets) and derived metrics (latency, token cost). | Include quick copy-to-clipboard for reproduction. |
+| Step detail drawer | Expand any trace to inspect request/response payloads (redacted secrets), aggregated metrics (latency, token cost), and quick “copy trace” affordances. | Include provenance badges (cache hit, RAWG retry, etc.). |
 | Filters & presets | Toggle to view only failures, slow steps, or specific tool IDs; “Repro Mode” preset pins seeds, model id, and inputs. citeturn0search7 |
 | Golden run diff | Compare latest run to baseline evaluation prompts, highlighting regressions in outputs or metrics. | Integrate with evaluation assertions once they exist. |
 | Export to external observability | One-click push of trace bundle to LangSmith/Datadog for deeper inspection. | Keeps local panel lightweight while enabling richer dashboards. citeturn0reddit17turn0search2 |
+| Calculation receipt | Auto-generated summary card: filters applied, dataset sizes, arithmetic steps, and resulting value. Lives beside the final answer. | Pulls from the same span metadata; becomes the “proof” users see without opening the drawer. |
+| Visual change indicators | Sparkline or delta badge to show how an evaluation output changed versus the last golden run. | Provides at-a-glance verification for repeated questions. |
 
 ## Data Model & Instrumentation
 

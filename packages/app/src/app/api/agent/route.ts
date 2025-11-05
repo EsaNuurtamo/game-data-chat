@@ -1,21 +1,11 @@
-import {
-  streamText,
-  convertToModelMessages,
-  validateUIMessages,
-  stepCountIs,
-  type UIMessage,
-} from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
-import { createMcpClient } from "@/lib/mcp";
+import { validateUIMessages, type UIMessage } from "ai";
 
-const prompt = `You are an analytics assistant that must use the provided tools to answer questions about video games. 
-Explain your calculations clearly, but do not expose internal dataset identifiers in your response. If tool calls fail, report the failure.
-If you are asked about playstation, or xbox overall use parent platform filters.
-`;
+import type { AgentUIMessage } from "@/types/Agent";
+import { createConversationAgentResponse } from "@/lib/agents/conversationAgent";
 
 type RequestBody =
   | {
-      messages?: UIMessage[];
+      messages?: AgentUIMessage[];
       prompt?: never;
     }
   | {
@@ -24,102 +14,115 @@ type RequestBody =
     };
 
 export async function POST(req: Request): Promise<Response> {
-  let messages: UIMessage[];
   let body: RequestBody;
+
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return new Response(
-      JSON.stringify({ error: "Request body must be valid JSON." }),
-      { status: 400, headers: { "content-type": "application/json" } }
+    return jsonResponse(
+      { error: "Request body must be valid JSON." },
+      { status: 400 }
     );
   }
 
-  if (Array.isArray(body.messages)) {
-    try {
-      messages = await validateUIMessages({ messages: body.messages });
-    } catch (error) {
-      return new Response(
-        JSON.stringify({
-          error: "Invalid UI messages payload",
-          details: error instanceof Error ? error.message : String(error ?? ""),
-        }),
-        { status: 400, headers: { "content-type": "application/json" } }
-      );
-    }
-  } else if (typeof body.prompt === "string" && body.prompt.trim().length > 0) {
-    messages = [
-      {
-        id: crypto.randomUUID(),
-        role: "user",
-        parts: [
-          {
-            type: "text",
-            text: body.prompt.trim(),
-          },
-        ],
-      },
-    ];
-  } else {
-    return new Response(
-      JSON.stringify({
-        error:
-          "Provide either `messages` (array) or a non-empty `prompt` string.",
-      }),
-      { status: 400, headers: { "content-type": "application/json" } }
-    );
+  const parsedMessages = await parseMessages(body);
+  if (!parsedMessages.ok) {
+    return parsedMessages.response;
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return new Response(
-      JSON.stringify({
-        error: "OPENAI_API_KEY is not configured",
-      }),
-      { status: 500, headers: { "content-type": "application/json" } }
+    return jsonResponse(
+      { error: "OPENAI_API_KEY is not configured" },
+      { status: 500 }
     );
   }
-
-  const modelName = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
-  const openai = createOpenAI({ apiKey });
 
   try {
-    const client = await createMcpClient();
-    const tools = await client.tools();
-    const closeClient = async () => {
-      try {
-        await client.close();
-      } catch (closeError) {
-        console.warn("Failed to close MCP client", closeError);
-      }
-    };
-
-    const result = await streamText({
-      model: openai(modelName),
-      system: prompt,
-      messages: convertToModelMessages(messages),
-      tools,
-      maxRetries: 1,
-      temperature: 0.3,
-      stopWhen: stepCountIs(6),
-      onFinish: closeClient,
-      onError: async () => {
-        await closeClient();
-      },
-      onAbort: async () => {
-        await closeClient();
-      },
+    return await createConversationAgentResponse({
+      messages: parsedMessages.messages,
+      apiKey,
+      modelName: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
     });
-
-    return result.toUIMessageStreamResponse({ originalMessages: messages });
   } catch (error) {
     console.error("Agent invocation failed", error);
-    return new Response(
-      JSON.stringify({
+    return jsonResponse(
+      {
         error: "Agent execution failed",
         details: error instanceof Error ? error.message : String(error ?? ""),
-      }),
-      { status: 500, headers: { "content-type": "application/json" } }
+      },
+      { status: 500 }
     );
   }
+}
+
+async function parseMessages(
+  body: RequestBody
+): Promise<
+  | { ok: true; messages: AgentUIMessage[] }
+  | { ok: false; response: Response }
+> {
+  if (Array.isArray(body.messages)) {
+    try {
+      return {
+        ok: true,
+        messages: await validateUIMessages<AgentUIMessage>({
+          messages: body.messages as UIMessage[],
+        }),
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        response: jsonResponse(
+          {
+            error: "Invalid UI messages payload",
+            details:
+              error instanceof Error ? error.message : String(error ?? ""),
+          },
+          { status: 400 }
+        ),
+      };
+    }
+  }
+
+  if (typeof body.prompt === "string" && body.prompt.trim().length > 0) {
+    return {
+      ok: true,
+      messages: [
+        {
+          id: crypto.randomUUID(),
+          role: "user",
+          parts: [
+            {
+              type: "text",
+              text: body.prompt.trim(),
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  return {
+    ok: false,
+    response: jsonResponse(
+      {
+        error: "Provide either `messages` (array) or a non-empty `prompt` string.",
+      },
+      { status: 400 }
+    ),
+  };
+}
+
+function jsonResponse(
+  data: unknown,
+  init: ResponseInit & { status: number }
+): Response {
+  return new Response(JSON.stringify(data), {
+    ...init,
+    headers: {
+      "content-type": "application/json",
+      ...(init.headers ?? {}),
+    },
+  });
 }
