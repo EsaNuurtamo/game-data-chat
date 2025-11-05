@@ -11,11 +11,7 @@ This monorepo delivers a small vertical slice that runs locally and is intended 
 - **`packages/db`** – Shared TypeScript utilities and Zod schemas used by both worker and UI. Designed to target Cloudflare KV today and other storage engines later.
 - **`scripts/`** – Workspace utilities, including RAWG dataset fetchers for tags, platforms, and developers.
 
-For a deeper look at the implementation goals and open questions, see:
-
-- `INSTRUCTIONS.md` – Original challenge brief.
-- `docs/debug-panel.md` – Debugging panel roadmap.
-- `docs/calculation-query-language.md` – Plans for richer calculation queries and traceability.
+For a deeper look at the implementation goals and open questions, see `docs/`
 
 ## Local Development
 
