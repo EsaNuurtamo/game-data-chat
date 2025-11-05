@@ -113,7 +113,7 @@ pnpm dev:app
 - Doing some calulations while fetching and some after fetch feels like too much to handle given the scope so decided that during fetch_games there is no stats calculations made
 - Should I filter from the api only those that have metacritic score? Last years games do not have that and the API does not allow to filter by user ratings
 
-### Time & Effort (to document before submission)
+### Time & Effort
 
 - Planning & architecture - 1h
 - MCP worker foundation – 2h
