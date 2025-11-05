@@ -5,18 +5,16 @@ Centralized guidance for anyone iterating on the RAWG analytics agent, MCP worke
 ## Quick Links
 
 - [`README.md`](./README.md) – Project overview, local dev instructions, and roadmap.
-- [`INSTRUCTIONS.md`](./INSTRUCTIONS.md) – Original Supercell assessment brief.
-- [`docs/debug-panel.md`](./docs/debug-panel.md) – Planned debugging & observability panel.
 - [`docs/calculation-query-language.md`](./docs/calculation-query-language.md) – Roadmap for richer calculations & traces.
-- [`plans/local-first-shot.md`](./plans/local-first-shot.md) – Current implementation priorities.
+- [`docs/local-first-shot.md`](./docs/local-first-shot.md) – Current implementation priorities.
 
 ## Architecture Snapshot
 
-| Package | Purpose |
-| --- | --- |
+| Package        | Purpose                                                                                                          |
+| -------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `packages/mcp` | Cloudflare Worker MCP server exposing `fetch_game_data` + `execute_calculation`, uses Cloudflare KV for caching. |
-| `packages/app` | Next.js 16 agent UI running OpenAI Responses API server-side with support for evaluation prompts. |
-| `packages/db` | Shared schemas, filter canonicalization, cache helpers; designed to swap storage backends later. |
+| `packages/app` | Next.js 16 agent UI running OpenAI Responses API server-side with support for evaluation prompts.                |
+| `packages/db`  | Shared schemas, filter canonicalization, cache helpers; designed to swap storage backends later.                 |
 
 Shared configuration lives in `tsconfig.base.json`; `pnpm-workspace.yaml` wires the repo as a single workspace.
 
@@ -56,12 +54,9 @@ We need an experience that makes it obvious _why_ the agent’s answer is trustw
 - **Golden Run Badges** – For evaluation prompts, display a green/red badge next to the answer showing whether it matches the saved golden output. Clicking the badge opens the golden run diff view in the debug panel.
 - **Downloadable Trace Bundle** – Provide a “Download calculation bundle” button that exports the tool inputs/outputs and aggregate metrics as JSON. Power users can replay the exact flow elsewhere.
 
-Document progress on these items in `docs/debug-panel.md` and keep the design artifacts close to the code so future contributors know the bar for transparency.
-
 ## Immediate Focus Areas
 
-- Implement the debugging panel features in `docs/debug-panel.md` (timeline + receipts first).
 - Extend calculation DSL & trace output per `docs/calculation-query-language.md`; ensure every new calculation shape exports the metadata needed for receipts.
 - Harden evaluation assertions and surface regressions in the UI (golden run badges + diff tooling).
 
-Follow the plan in `plans/local-first-shot.md` for sequencing. Update this document as new workflows or tooling tips emerge.
+Follow the plan in `docs/local-first-shot.md` for sequencing. Update this document as new workflows or tooling tips emerge.

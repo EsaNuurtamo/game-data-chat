@@ -1,6 +1,6 @@
 # Calculation Query Language & Traceability
 
-Our current `execute_calculation` tool supports a small set of operations (`avg`, `count`, `group_avg`). Analysts need richer analytics plus transparent traces to verify results. This document sketches the next iteration.
+Our current `execute_calculation` tool supports a small set of operations (`avg`, `count`) and also for grouped data. Analysts need richer analytics plus transparent traces to verify results. This document sketches the next iteration.
 
 ## Goals
 
@@ -40,15 +40,15 @@ Examples:
   "operation": "percentile",
   "field": "rating",
   "groups": ["genres"],
-  "filters": [{"field": "released", "op": ">=", "value": "2024-01-01"}],
+  "filters": [{ "field": "released", "op": ">=", "value": "2024-01-01" }],
   "dataset": {
     "id": "rawg:games:v1:<hash>",
     "itemsFetched": 40,
     "cache": "hit"
   },
   "stages": [
-    {"name": "filter", "recordsIn": 40, "recordsOut": 32, "latencyMs": 3},
-    {"name": "percentile", "quantile": 0.9, "result": 4.5, "latencyMs": 2}
+    { "name": "filter", "recordsIn": 40, "recordsOut": 32, "latencyMs": 3 },
+    { "name": "percentile", "quantile": 0.9, "result": 4.5, "latencyMs": 2 }
   ],
   "durationMs": 12,
   "warnings": []
@@ -58,7 +58,6 @@ Examples:
 ## Testing & Evaluation
 
 - Add golden calculations with expected traces to the evaluation panel so regressions surface visually. citeturn0search7
-- Integrate traces with the debugging panel export to external platforms for longitudinal analysis. citeturn0reddit17turn0search6
 
 ## Implementation Phases
 

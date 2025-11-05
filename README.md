@@ -86,28 +86,40 @@ pnpm dev:app
 
 ## Known Limitations & Roadmap
 
-- **Debugging & Observability** – The UI lacks a proper debugging panel and trace visualization for tool calls. See `docs/debug-panel.md` for planned upgrades such as structured timelines, request/response inspection, receipts for each calculation, and change diffs for golden runs.
 - **Calculation Query Language** – Calculations are limited to averages/counts. `docs/calculation-query-language.md` outlines richer operations (percentiles, grouped stats) and the trace format needed for review.
-- **Deployment Guides** – Cloudflare deployment steps are still pending. Add instructions once Pages & Workers configs stabilize.
 - **Automated Evaluations** – Current evaluation panel uses deterministic prompts without assertions. Extend to structured checks with diff support.
 
-## Challenge Context
+## Process
 
-This project was built for the “Supercell Technical Assessment: Game Analytics MCP Server.” See `INSTRUCTIONS.md` for requirements, evaluation criteria, and submission expectations.
+## Approach
+
+- Never done MCP deployments or worked with Claudflare so researched those first
+- Minimal local setup and fast deploy to surface unknown unknowns of Claudeflare early on
+- Thinking of ai/sdk and NextJS for nice UX, checked if it works in Claudeflare
+- Authentication is a must because of API_KEYS being exploitable so doing a fast one with Clerk
+- Went though the docs of RAWG.io to graps what is possible with the data
+- Imported OpenApi spec to postman to test some queries
+- Planned the work with Codex given the instructions and the openapi spec
+- Fetched platforms, tags, parent platforms and developers to pick the important things
+
+## Challenges
+
+- Dealing with the 40 items per page limit in RAWG
+- fetch_game_data and calculation are coupled and data needs to be fetched first to some place
+- Generalizing is hard because of the special cases "exclisive" is one tag among the many, extracting 6000 tags is not possible -> hardcoding set of useful tags
+- Inconsistent data: metacritic scores missing after 2023, metacritic score can be null but rating cannot so even if there is no ratings ratings has 0 => compromise to filter out 0 values from calculations
+- Caching/Data storage
+  - Not many cache hits as data is now cached with hashed filters as a key and filters are different in most conversations
+  - Thought of only allowing time period filter, that way all differen queries for that time period would hit cache
+  - Thought of using the 30000 free requests to get all their data to own sql and updating periodically: that way we could enrich the data with embeddings and such
+- LLM to SQL kind of approach would be nice for the calculations or code generation, ended up generating the query "language" with LLM. There are also ready made options
+- Some statistics like count you can get from the first page of the data req, also median need only 2 queries always
+- Doing some calulations while fetching and some after fetch feels like too much to handle given the scope so decided that during fetch_games there is no stats calculations made
+- Should I filter from the api only those that have metacritic score? Last years games do not have that and the API does not allow to filter by user ratings
 
 ### Time & Effort (to document before submission)
 
-- Planning & architecture review – _capture hours here_
-- MCP worker foundation – _capture hours here_
-- UI & evaluation harness – _capture hours here_
-- Documentation & research – _capture hours here_
-
-> Keep this section updated as you work; the challenge requires a rough breakdown when submitting.
-
-## Contributing / Next Steps
-
-1. Review `docs/debug-panel.md` and design the debugging UI.
-2. Prototype the calculation language extensions described in `docs/calculation-query-language.md`.
-3. Add deployment automation (Wrangler/Pages) and document smoke tests.
-
-Please open issues or discussion threads to propose additional enhancements.
+- Planning & architecture - 1h
+- MCP worker foundation – 2h
+- UI & evaluation harness – 5h
+- Documentation & research – 2h
