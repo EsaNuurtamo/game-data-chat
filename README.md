@@ -88,7 +88,7 @@ pnpm dev:app
 
 ## Known Limitations & Roadmap
 
-- **Calculation Query Language** – Calculations are limited to averages/counts. `docs/calculation-query-language.md` outlines richer operations (percentiles, grouped stats) and the trace format needed for review.
+- **Calculation Query Language** – `execute_calculation` evaluates JSON Query expressions. `docs/calculation-query-language.md` captures the query patterns, helper functions (like `unnest`), and tracing requirements.
 
 ## Process
 

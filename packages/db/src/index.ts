@@ -3,3 +3,4 @@ export * from "./schemas";
 export * from "./filters";
 export * from "./dataset";
 export * from "./calculations";
+export * from "./jsonQuery";

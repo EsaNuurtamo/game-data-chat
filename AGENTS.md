@@ -56,7 +56,7 @@ We need an experience that makes it obvious _why_ the agent’s answer is trustw
 
 ## Immediate Focus Areas
 
-- Extend calculation DSL & trace output per `docs/calculation-query-language.md`; ensure every new calculation shape exports the metadata needed for receipts.
+- Expand the JSON Query-powered calculations + tracing described in `docs/calculation-query-language.md`; every query should log its inputs/outputs for receipts.
 - Harden evaluation assertions and surface regressions in the UI (golden run badges + diff tooling).
 
 Follow the plan in `docs/local-first-shot.md` for sequencing. Update this document as new workflows or tooling tips emerge.

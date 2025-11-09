@@ -62,21 +62,32 @@ export class GameDataAgent extends McpAgent<EnvBindings> {
 
     this.server.tool(
       "execute_calculation",
-      "Run numerical aggregations against a cached RAWG dataset.",
+      [
+        "Run a JSON Query expression against a cached RAWG dataset.",
+        "Pass { datasetId, query } where query uses https://jsonquerylang.org syntax.",
+        "Examples:",
+        "- Count games per genre: `.items | unnest(.genres) | groupBy(.genres.name) | mapValues(size())`",
+        "- Average rating per platform: `.items | unnest(.platforms) | groupBy(.platforms.platform.name) | mapValues(map(.rating) | average())`",
+        "- Filter high-rated games: `.items | filter(.rating > 4)`",
+        "- Top 5 games by rating: `.items | sort(.rating, \"desc\") | limit(5)`",
+      ].join(" "),
       executeToolArgsShape,
       async (args) => {
         const structured = executeOutputSchema.parse(
           await handleExecuteCalculation(
             {
               datasetId: args.datasetId,
-              operation: args.operation,
-              field: args.field,
-              groupBy: args.groupBy,
+              query: args.query,
               fresh: args.fresh ?? false,
             },
             this.bindings
           )
         );
+
+        const queryPreview =
+          structured.query.length > 120
+            ? `${structured.query.slice(0, 117)}…`
+            : structured.query;
 
         return {
           content: [
@@ -84,7 +95,7 @@ export class GameDataAgent extends McpAgent<EnvBindings> {
               type: "text",
               text: [
                 `datasetId=${structured.datasetId}`,
-                `operation=${structured.operation}`,
+                `query=${queryPreview}`,
                 `itemsProcessed=${structured.itemsProcessed}`,
                 `value=${JSON.stringify(structured.value)}`,
               ].join(" | "),

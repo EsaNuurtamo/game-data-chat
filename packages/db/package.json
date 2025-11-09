@@ -10,12 +10,15 @@
   "scripts": {
     "build": "tsc --project tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc --project tsconfig.json --noEmit",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@jsonquerylang/jsonquery": "^5.0.4",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^2.1.4"
   }
 }

@@ -19,6 +19,33 @@ Explain your calculations clearly, but do not expose internal dataset identifier
 If tool calls fail, report the failure.
 Sometimes you will be asked about the whole family of consoles like all playstations or xbox games use parent platform for that.
 Format every user-facing response in well-structured Markdown, using headings, bullet lists, tables, and code blocks when appropriate.
+
+Use \`fetch_game_data\` to gather RAWG results before running numbers. When you need to compute statistics, call \`execute_calculation\` with \`{ "datasetId": "...", "query": "<JSON Query expression>" }\`. Queries use https://jsonquerylang.org syntax. Helpful examples:
+- Count games per genre:
+  \`\`\`
+  .items
+    | unnest(.genres)
+    | groupBy(.genres.name)
+    | mapValues(size())
+  \`\`\`
+- Average rating per platform:
+  \`\`\`
+  .items
+    | unnest(.platforms)
+    | groupBy(.platforms.platform.name)
+    | mapValues(map(.rating) | average())
+  \`\`\`
+- Games with rating > 4:
+  \`\`\`
+  .items
+    | filter(.rating > 4)
+  \`\`\`
+- Top 5 games by rating:
+  \`\`\`
+  .items
+    | sort(.rating, "desc")
+    | limit(5)
+  \`\`\`
 `;
 
 type AgentTextStreamPart = TextStreamPart<ToolSet>;
@@ -523,21 +550,9 @@ function summarizeCalculationInput(input: unknown): string | null {
     return null;
   }
   const record = input as Record<string, unknown>;
-  const operation =
-    typeof record.operation === "string"
-      ? humanizeIdentifier(record.operation)
-      : null;
-  const field =
-    typeof record.field === "string" ? humanizeIdentifier(record.field) : null;
-  const groupBy =
-    typeof record.groupBy === "string"
-      ? humanizeIdentifier(record.groupBy)
-      : null;
-  const parts = [operation, field].filter(Boolean);
-  if (groupBy) {
-    parts.push(`by ${groupBy}`);
-  }
-  return parts.length > 0 ? parts.join(" ") : null;
+  const query =
+    typeof record.query === "string" ? record.query : null;
+  return query ? formatQuerySnippet(query) : null;
 }
 
 function summarizeCalculationOutput(output: unknown): string | null {
@@ -545,20 +560,60 @@ function summarizeCalculationOutput(output: unknown): string | null {
     return null;
   }
   const record = output as Record<string, unknown>;
-  const value = record.value;
+  const query =
+    typeof record.query === "string" ? record.query : null;
   const itemsProcessed = record.itemsProcessed;
   const parts: string[] = [];
-  if (
-    value !== undefined &&
-    value !== null &&
-    (typeof value === "number" || typeof value === "string")
-  ) {
-    parts.push(`result ${value}`);
+  const querySnippet = query ? formatQuerySnippet(query) : null;
+  if (querySnippet) {
+    parts.push(querySnippet);
   }
   if (typeof itemsProcessed === "number") {
     parts.push(`${itemsProcessed} items`);
   }
-  return parts.length > 0 ? parts.join(", ") : null;
+  if (parts.length === 0 && "value" in record) {
+    const summary = summarizeUnknownValue(record.value);
+    if (summary) {
+      parts.push(summary);
+    }
+  }
+  return parts.length > 0 ? parts.join(" | ") : null;
+}
+
+function formatQuerySnippet(query: string): string | null {
+  const singleLine = query
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!singleLine) {
+    return null;
+  }
+  return singleLine.length > 90
+    ? `${singleLine.slice(0, 87)}…`
+    : singleLine;
+}
+
+function summarizeUnknownValue(value: unknown): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === "string" || typeof value === "number") {
+    return `result ${String(value)}`;
+  }
+  try {
+    const serialized = JSON.stringify(value);
+    if (!serialized) {
+      return null;
+    }
+    return serialized.length > 60
+      ? `${serialized.slice(0, 57)}…`
+      : serialized;
+  } catch {
+    return null;
+  }
 }
 
 function humanizeIdentifier(value: string): string {

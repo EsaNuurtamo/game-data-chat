@@ -6,9 +6,7 @@ import type { EnvBindings } from "../types";
 
 export const executeToolArgsShape = {
   datasetId: z.string(),
-  operation: z.enum(["avg", "count", "min", "max"]),
-  field: z.enum(["metacritic", "rating"]),
-  groupBy: z.enum(["genres", "platforms"]).optional(),
+  query: z.string().min(1, "Query must be a non-empty string"),
   fresh: z.boolean().optional(),
 } as const;
 
@@ -16,9 +14,7 @@ const executeToolInputSchema = z.object(executeToolArgsShape);
 
 export const executeOutputSchema = z.object({
   datasetId: z.string(),
-  operation: z.enum(["avg", "count", "min", "max"]),
-  field: z.enum(["metacritic", "rating"]),
-  groupBy: z.string().nullable(),
+  query: z.string(),
   value: z.unknown(),
   itemsProcessed: z.number(),
   fetchedAt: z.string(),
@@ -50,27 +46,22 @@ export async function handleExecuteCalculation(
 
   const calcResult = runCalculation({
     dataset: latestDataset,
-    operation: parsed.operation,
-    field: parsed.field,
-    groupBy: parsed.groupBy,
+    query: parsed.query,
   });
 
   console.log(
     "[mcp] execute_calculation",
     JSON.stringify({
       datasetId: parsed.datasetId,
-      operation: parsed.operation,
-      groupBy: parsed.groupBy ?? null,
       itemsProcessed: calcResult.itemsProcessed,
       totalItems: latestDataset.items.length,
+      query: parsed.query,
     })
   );
 
   return executeOutputSchema.parse({
     datasetId: parsed.datasetId,
-    operation: parsed.operation,
-    field: parsed.field,
-    groupBy: parsed.groupBy ?? null,
+    query: parsed.query,
     value: calcResult.value ?? null,
     itemsProcessed: calcResult.itemsProcessed,
     fetchedAt: latestDataset.fetchedAt,
