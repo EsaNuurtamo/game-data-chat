@@ -66,10 +66,11 @@ export class GameDataAgent extends McpAgent<EnvBindings> {
         "Run a JSON Query expression against a cached RAWG dataset.",
         "Pass { datasetId, query } where query uses https://jsonquerylang.org syntax.",
         "Examples:",
+        "- Count average rating: `.items | filter(.rating > 0) | map(.rating) | average()` // filter away the one with no rating (0 value)",
         "- Count games per genre: `.items | unnest(.genres) | groupBy(.genres.name) | mapValues(size())`",
-        "- Average rating per platform: `.items | unnest(.platforms) | groupBy(.platforms.platform.name) | mapValues(map(.rating) | average())`",
+        "- Average rating per platform: `.items | filter(.rating > 0) | unnest(.platforms) | groupBy(.platforms.platform.name) | mapValues(map(.rating) | average())`",
         "- Filter high-rated games: `.items | filter(.rating > 4)`",
-        "- Top 5 games by rating: `.items | sort(.rating, \"desc\") | limit(5)`",
+        '- Top 5 games by rating: `.items | sort(.rating, "desc") | limit(5)`',
       ].join(" "),
       executeToolArgsShape,
       async (args) => {
