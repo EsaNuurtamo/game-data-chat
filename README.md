@@ -13,6 +13,12 @@ This monorepo delivers a small vertical slice that runs locally and is intended 
 
 For a deeper look at the implementation goals and open questions, see `docs/`
 
+### Dataset Caching
+
+- RAWG enforces paging, so the worker streams each page sequentially for a canonicalized filter set, keeps the combined list of games in memory (guarded by `RAWG_RESULT_HARD_LIMIT = 2000`), and only writes the final aggregate once.
+- Cloudflare KV now stores a single dataset entry per filter hash—there are no `datasetKey:pN` page records anymore—so calculations and receipts always pull from the same snapshot.
+- TTL/refresh behavior is unchanged: each aggregate carries `fetchedAt`/`expiresAt` based on `DEFAULT_DATASET_TTL_MS`, and cache refreshes simply overwrite the single KV item.
+
 ## Local Development
 
 ### Prerequisites

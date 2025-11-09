@@ -72,10 +72,6 @@ export async function buildDatasetKey(
   return { key, canonical, hash };
 }
 
-export function buildPageKey(datasetKey: string, page: number): string {
-  return `${datasetKey}:p${page}`;
-}
-
 export function shouldRefresh(
   dataset: DatasetMetadata,
   now: Date = new Date()

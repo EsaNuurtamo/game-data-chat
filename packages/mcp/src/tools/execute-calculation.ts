@@ -1,12 +1,7 @@
 import { runCalculation, shouldRefresh } from "@game-data/db";
 import { z } from "zod";
 
-import {
-  buildAggregateDataset,
-  handleFetchDataset,
-  readDataset,
-  writeDataset,
-} from "../datasets";
+import { fetchAggregateDataset, readDataset, writeDataset } from "../datasets";
 import type { EnvBindings } from "../types";
 
 export const executeToolArgsShape = {
@@ -48,14 +43,13 @@ export async function handleExecuteCalculation(
 
   const latestDataset =
     parsed.fresh || shouldRefresh(dataset)
-      ? await handleFetchDataset(env, dataset.key, dataset.filters)
+      ? await fetchAggregateDataset(env, dataset.key, dataset.filters)
       : dataset;
 
-  const aggregateDataset = await buildAggregateDataset(env, latestDataset);
-  await writeDataset(env.RAWG_CACHE, aggregateDataset.key, aggregateDataset);
+  await writeDataset(env.RAWG_CACHE, latestDataset.key, latestDataset);
 
   const calcResult = runCalculation({
-    dataset: aggregateDataset,
+    dataset: latestDataset,
     operation: parsed.operation,
     field: parsed.field,
     groupBy: parsed.groupBy,
@@ -68,7 +62,7 @@ export async function handleExecuteCalculation(
       operation: parsed.operation,
       groupBy: parsed.groupBy ?? null,
       itemsProcessed: calcResult.itemsProcessed,
-      totalItems: aggregateDataset.items.length,
+      totalItems: latestDataset.items.length,
     })
   );
 
@@ -79,7 +73,7 @@ export async function handleExecuteCalculation(
     groupBy: parsed.groupBy ?? null,
     value: calcResult.value ?? null,
     itemsProcessed: calcResult.itemsProcessed,
-    fetchedAt: aggregateDataset.fetchedAt,
-    expiresAt: aggregateDataset.expiresAt,
+    fetchedAt: latestDataset.fetchedAt,
+    expiresAt: latestDataset.expiresAt,
   });
 }

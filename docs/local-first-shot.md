@@ -4,7 +4,7 @@
 
 ## Goals
 - Deliver a locally runnable vertical slice using RAWG data via the MCP server.
-- Cache RAWG responses in Cloudflare KV with canonical keys shared between MCP and Next.js layers.
+- Cache RAWG responses in Cloudflare KV with canonical keys shared between MCP and Next.js layers (pagination is handled in-memory now, so only the aggregate dataset is persisted).
 - Provide a simple Next.js UI endpoint to trigger tool usage (manual for now; LLM integration later).
 - Keep configurations and environment expectations documented.
 

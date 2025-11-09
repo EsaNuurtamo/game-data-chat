@@ -1,10 +1,7 @@
 import {
   DATASET_VERSION,
   DEFAULT_DATASET_TTL_MS,
-  buildDatasetKey,
-  buildPageKey,
   kvDatasetRecordSchema,
-  shouldRefresh,
 } from "@game-data/db";
 import type {
   CanonicalizedFilters,
@@ -27,62 +24,39 @@ const rawgResponseSchema = z.object({
   results: kvDatasetRecordSchema.shape.items,
 });
 
-export async function handleFetchDataset(
+export async function fetchAggregateDataset(
   env: EnvBindings,
   datasetKey: string,
   canonicalFilters: CanonicalizedFilters
 ): Promise<KvDatasetRecord> {
-  const raw = await fetchRawgDataset(env, datasetKey, canonicalFilters);
-  const record: KvDatasetRecord = {
-    ...raw,
-    version: DATASET_VERSION,
-  };
-
-  await writeDataset(
-    env.RAWG_CACHE,
-    buildPageKey(datasetKey, canonicalFilters.page),
-    record
-  );
-
-  return record;
-}
-
-export async function buildAggregateDataset(
-  env: EnvBindings,
-  dataset: KvDatasetRecord
-): Promise<KvDatasetRecord> {
-  const pages: KvDatasetRecord[] = [];
-  const baseFilters = duplicateFilters(dataset.filters);
+  const pages: Array<Omit<KvDatasetRecord, "version">> = [];
+  const baseFilters = duplicateFilters(canonicalFilters);
 
   console.log(
     "[mcp] aggregate_dataset_start",
     JSON.stringify({
-      datasetKey: dataset.key,
-      totalPages: dataset.totalPages,
-      cachedPage: dataset.page,
+      datasetKey,
+      requestedPage: canonicalFilters.page,
+      pageSize: canonicalFilters.pageSize,
     })
   );
 
-  for (let page = 1; page <= dataset.totalPages; page += 1) {
-    if (page === dataset.page) {
-      pages.push(dataset);
-      continue;
-    }
-
-    const pageDataset = await loadDatasetPage(env, baseFilters, page);
+  let totalPages = 0;
+  for (let page = 1; totalPages === 0 || page <= totalPages; page += 1) {
+    baseFilters.page = page;
+    const pageDataset = await fetchRawgDataset(env, datasetKey, baseFilters);
     pages.push(pageDataset);
+    totalPages = Math.max(totalPages, pageDataset.totalPages);
 
-     if (pageDataset.key !== dataset.key || page !== dataset.page) {
-       console.log(
-         "[mcp] aggregate_dataset_page",
-         JSON.stringify({
-           datasetKey: dataset.key,
-           pageFetched: pageDataset.page,
-           totalPages: dataset.totalPages,
-           items: pageDataset.items.length,
-         })
-       );
-     }
+    console.log(
+      "[mcp] aggregate_dataset_page",
+      JSON.stringify({
+        datasetKey,
+        pageFetched: page,
+        totalPages: pageDataset.totalPages,
+        items: pageDataset.items.length,
+      })
+    );
   }
 
   pages.sort((a, b) => a.page - b.page);
@@ -91,71 +65,29 @@ export async function buildAggregateDataset(
     return new Date(current.fetchedAt) > new Date(latest.fetchedAt)
       ? current
       : latest;
-  }, dataset);
+  }, pages[0]);
 
   const dedupedItems = dedupeItems(pages.flatMap((entry) => entry.items));
 
   console.log(
     "[mcp] aggregate_dataset_complete",
     JSON.stringify({
-      datasetKey: dataset.key,
+      datasetKey,
       pagesAggregated: pages.length,
       totalItems: dedupedItems.length,
     })
   );
 
   return {
-    ...dataset,
-    page: dataset.page,
-    totalPages: pages.length,
+    key: datasetKey,
+    filters: canonicalFilters,
+    page: canonicalFilters.page,
+    totalPages: Math.max(totalPages, canonicalFilters.page),
     fetchedAt: freshest.fetchedAt,
     expiresAt: freshest.expiresAt,
     items: dedupedItems,
+    version: DATASET_VERSION,
   };
-}
-
-export async function loadDatasetPage(
-  env: EnvBindings,
-  baseFilters: CanonicalizedFilters,
-  page: number
-): Promise<KvDatasetRecord> {
-  const filtersForPage: CanonicalizedFilters = {
-    genres: [...baseFilters.genres],
-    platforms: [...baseFilters.platforms],
-    parentPlatforms: [...baseFilters.parentPlatforms],
-    tags: [...baseFilters.tags],
-    releasedFrom: baseFilters.releasedFrom,
-    releasedTo: baseFilters.releasedTo,
-    page,
-    pageSize: baseFilters.pageSize,
-  };
-
-  const { key, canonical } = await buildDatasetKey(filtersForPage);
-  const pageKey = buildPageKey(key, canonical.page);
-
-  let dataset = await readDataset(env.RAWG_CACHE, pageKey);
-  const cacheHit = Boolean(dataset);
-  const needsRefresh = !dataset || shouldRefresh(dataset);
-  if (needsRefresh) {
-    dataset = await handleFetchDataset(env, key, canonical);
-  }
-
-  if (!dataset) {
-    throw new Error(`Failed to hydrate dataset page ${page}`);
-  }
-
-  console.log(
-    "[mcp] dataset_page_resolved",
-    JSON.stringify({
-      datasetKey: key,
-      page,
-      cacheHit,
-      refreshed: needsRefresh,
-      items: dataset.items.length,
-    })
-  );
-
-  return dataset;
 }
 
 export async function readDataset(

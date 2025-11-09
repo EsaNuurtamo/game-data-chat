@@ -1,7 +1,7 @@
-import { buildDatasetKey, buildPageKey, fetchFiltersSchema, shouldRefresh } from "@game-data/db";
+import { buildDatasetKey, fetchFiltersSchema, shouldRefresh } from "@game-data/db";
 import { z } from "zod";
 
-import { buildAggregateDataset, handleFetchDataset, readDataset, writeDataset } from "../datasets";
+import { fetchAggregateDataset, readDataset, writeDataset } from "../datasets";
 import type { EnvBindings } from "../types";
 
 export const fetchToolArgsShape = {
@@ -42,13 +42,13 @@ export async function handleFetchGameData(
 ): Promise<FetchOutput> {
   const parsed = fetchInputSchema.parse(input);
   const { key: datasetKey, canonical } = await buildDatasetKey(parsed.filters);
-  const pageKey = buildPageKey(datasetKey, canonical.page);
 
-  let dataset = await readDataset(env.RAWG_CACHE, pageKey);
+  let dataset = await readDataset(env.RAWG_CACHE, datasetKey);
   let cacheStatus: FetchOutput["cacheStatus"] = dataset ? "hit" : "miss";
 
   if (!dataset || parsed.force || shouldRefresh(dataset)) {
-    dataset = await handleFetchDataset(env, datasetKey, canonical);
+    dataset = await fetchAggregateDataset(env, datasetKey, canonical);
+    await writeDataset(env.RAWG_CACHE, datasetKey, dataset);
     cacheStatus = dataset
       ? cacheStatus === "hit"
         ? "refresh"
@@ -60,15 +60,12 @@ export async function handleFetchGameData(
     throw new Error("Failed to retrieve dataset from RAWG cache");
   }
 
-  const aggregate = await buildAggregateDataset(env, dataset);
-  await writeDataset(env.RAWG_CACHE, datasetKey, aggregate);
-
   console.log(
     "[mcp] fetch_game_data",
     JSON.stringify({
       datasetKey,
-      pagesFetched: aggregate.totalPages,
-      totalItems: aggregate.items.length,
+      pagesFetched: dataset.totalPages,
+      totalItems: dataset.items.length,
       cacheStatus
     })
   );
@@ -77,10 +74,10 @@ export async function handleFetchGameData(
     datasetId: datasetKey,
     datasetKey,
     cacheStatus,
-    totalPages: aggregate.totalPages,
-    totalItems: aggregate.items.length,
-    fetchedAt: aggregate.fetchedAt,
-    expiresAt: aggregate.expiresAt,
-    filters: aggregate.filters
+    totalPages: dataset.totalPages,
+    totalItems: dataset.items.length,
+    fetchedAt: dataset.fetchedAt,
+    expiresAt: dataset.expiresAt,
+    filters: dataset.filters
   });
 }
