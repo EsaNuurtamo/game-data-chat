@@ -44,7 +44,7 @@ export function MessageParts({ message }: MessagePartsProps) {
   );
 }
 
-const markdownComponents: Components = {
+export const markdownComponents: Components = {
   h1: ({ node, ...props }) => (
     <h2 className="text-xl font-semibold text-indigo-100" {...props} />
   ),

@@ -77,22 +77,21 @@ pnpm dev:app
 ## Approach & Current Status
 
 1. **MCP Worker** – Implements basic MCP lifecycle and tools on Cloudflare Workers. Responses are cached per canonicalized request for ~1 hour. (`packages/mcp/src/index.ts`)
-2. **Agent UI** – Simple evaluation harness that runs server-side to avoid exposing API keys. Needs expanded visualization for debugging (see roadmap).
+2. **Agent App** – NextJS app with UI and agent endpoint are served from Cloudflare Worker
 3. **Data Utilities** – `@game-data/db` holds shared schemas and cache helpers, enabling future storage backends without rewriting consumers.
 
 ## Known Limitations & Roadmap
 
 - **Calculation Query Language** – Calculations are limited to averages/counts. `docs/calculation-query-language.md` outlines richer operations (percentiles, grouped stats) and the trace format needed for review.
-- **Automated Evaluations** – Current evaluation panel uses deterministic prompts without assertions. Extend to structured checks with diff support.
 
 ## Process
 
 ## Approach
 
-- Never done MCP deployments or worked with Claudflare so researched those first
-- Minimal local setup and fast deploy to surface unknown unknowns of Claudeflare early on
-- Thinking of ai/sdk and NextJS for nice UX, checked if it works in Claudeflare
-- Authentication is a must because of API_KEYS being exploitable so doing a fast one with Clerk
+- Never done MCP deployments or worked much with Cloudflare so researched those first
+- Minimal local setup and fast deploy to surface unknown unknowns of Cloudflare early on
+- Thinking of ai/sdk and NextJS for nice UX, checked if it works in Cloudflare
+- Authentication is a must because of API_KEYS being exploitable so adding Clerk
 - Went though the docs of RAWG.io to graps what is possible with the data
 - Imported OpenApi spec to postman to test some queries
 - Planned the work with Codex given the instructions and the openapi spec
@@ -102,8 +101,11 @@ pnpm dev:app
 
 - Dealing with the 40 items per page limit in RAWG
 - fetch_game_data and calculation are coupled and data needs to be fetched first to some place
-- Generalizing is hard because of the special cases "exclisive" is one tag among the many, extracting 6000 tags is not possible -> hardcoding set of useful tags
-- Inconsistent data: metacritic scores missing after 2023, metacritic score can be null but rating cannot so even if there is no ratings ratings has 0 => compromise to filter out 0 values from calculations
+- Generalizing is hard because of the special cases like "exclusive titles"
+  - extracting 6000 tags is not possible -> hardcoding set of useful tags
+- Inconsistent data
+  - metacritic scores missing after 2023
+  - metacritic score can be null but rating cannot so even if there is no ratings value is 0 => compromise to filter out 0 values from calculations
 - Caching/Data storage
   - Not many cache hits as data is now cached with hashed filters as a key and filters are different in most conversations
   - Thought of only allowing time period filter, that way all differen queries for that time period would hit cache

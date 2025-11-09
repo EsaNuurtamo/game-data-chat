@@ -13,7 +13,11 @@ import type {
 } from "@game-data/db";
 import { z } from "zod";
 
-import { CACHE_TTL_SECONDS, RAWG_API_BASE } from "./constants";
+import {
+  CACHE_TTL_SECONDS,
+  RAWG_API_BASE,
+  RAWG_RESULT_HARD_LIMIT,
+} from "./constants";
 import type { EnvBindings } from "./types";
 import { safeReadError } from "./utils";
 import { resolveParentPlatformIds, resolvePlatformIds } from "./platforms";
@@ -266,8 +270,27 @@ async function fetchRawgDataset(
     throw new Error(`Failed to parse RAWG response: ${parsed.error.message}`);
   }
 
-  const { count, results: items } = parsed.data;
   const sanitizedUrl = url.toString().replace(env.RAWG_API_KEY, "***");
+  const { count, results: items } = parsed.data;
+
+  if (typeof count === "number" && count > RAWG_RESULT_HARD_LIMIT) {
+    console.warn(
+      "[mcp] rawg_response_limit_exceeded",
+      JSON.stringify({
+        datasetKey,
+        request: sanitizedUrl,
+        count,
+        limit: RAWG_RESULT_HARD_LIMIT,
+      })
+    );
+    throw new Error(
+      [
+        `RAWG returned ${count} games, which exceeds the maximum allowed (${RAWG_RESULT_HARD_LIMIT}).`,
+        "Please add filters (genre, platform, release window, tags) to narrow your request below this limit and try again.",
+      ].join(" ")
+    );
+  }
+
   console.log(
     "[mcp] rawg_response",
     JSON.stringify({
