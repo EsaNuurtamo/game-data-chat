@@ -11,6 +11,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 
 import { createMcpClient } from "@/lib/mcp";
 import type { AgentUIMessage, ThinkingStep } from "@/types/Agent";
+import { isAbortError } from "@/utils/errors";
 
 import { SYSTEM_PROMPT } from "./systemPrompt";
 import { forwardThinkingSteps } from "./thinkingSteps";
@@ -20,6 +21,7 @@ interface ConversationAgentOptions {
   apiKey: string;
   modelName?: string;
   dataAnalysisEnabled?: boolean;
+  signal?: AbortSignal;
 }
 
 export async function createConversationAgentResponse({
@@ -27,6 +29,7 @@ export async function createConversationAgentResponse({
   apiKey,
   modelName = "gpt-5-mini",
   dataAnalysisEnabled = false,
+  signal,
 }: ConversationAgentOptions): Promise<Response> {
   const openai = createOpenAI({ apiKey });
   const client = await createMcpClient();
@@ -57,14 +60,11 @@ export async function createConversationAgentResponse({
         },
       },
       maxRetries: 2,
+      abortSignal: signal,
       stopWhen: stepCountIs(10),
       onFinish: closeClient,
-      onError: async () => {
-        await closeClient();
-      },
-      onAbort: async () => {
-        await closeClient();
-      },
+      onError: closeClient,
+      onAbort: closeClient,
     });
 
     const runId = crypto.randomUUID();
@@ -72,10 +72,17 @@ export async function createConversationAgentResponse({
     const stream = createUIMessageStream<AgentUIMessage>({
       originalMessages: messages,
       onError: (error) => {
+        if (isAbortError(error)) {
+          return "Agent run cancelled.";
+        }
         console.error("Agent stream error", error);
         return "Agent execution failed.";
       },
       execute: async ({ writer }) => {
+        if (signal?.aborted) {
+          return;
+        }
+
         writer.write({
           type: "data-thinking-reset",
           id: runId,
@@ -88,6 +95,16 @@ export async function createConversationAgentResponse({
           })
         );
 
+        const abortHandler = () => {
+          writer.write({
+            type: "data-thinking-reset",
+            id: runId,
+            data: { runId },
+          });
+        };
+
+        signal?.addEventListener("abort", abortHandler);
+
         try {
           await forwardThinkingSteps({
             stream: result.fullStream,
@@ -96,6 +113,10 @@ export async function createConversationAgentResponse({
             now: () => new Date(),
           });
         } catch (thinkingError) {
+          if (isAbortError(thinkingError)) {
+            return;
+          }
+
           const failureStep: ThinkingStep = {
             id: `step-error-${runId}`,
             kind: "thought",
@@ -116,6 +137,8 @@ export async function createConversationAgentResponse({
           });
 
           throw thinkingError;
+        } finally {
+          signal?.removeEventListener("abort", abortHandler);
         }
       },
     });

@@ -14,7 +14,7 @@ OPENAI_MODEL = "gpt-5-mini"
 
 [[migrations]]
 tag = "v2"
-new_sqlite_classes = ["Sandbox"]
+new_sqlite_classes = ["Sandbox", "GameDataAgent"]
 
 [[containers]]
 class_name = "Sandbox"

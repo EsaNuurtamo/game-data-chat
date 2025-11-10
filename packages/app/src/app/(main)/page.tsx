@@ -20,6 +20,8 @@ export default function Home() {
     isStreaming,
     suggestedPrompts,
     onSelectSuggestion,
+    hasHistory,
+    clearHistory,
   } = useAgentChat();
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -58,6 +60,8 @@ export default function Home() {
             onSubmit={onSubmit}
             onStop={stop}
             isStreaming={isStreaming}
+            onClearHistory={clearHistory}
+            canClearHistory={hasHistory && !isStreaming}
           />
 
           {error ? (

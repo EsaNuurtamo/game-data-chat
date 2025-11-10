@@ -1,23 +1,23 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { TAG_DESCRIPTIONS, VERSION } from "./constants";
-import type { EnvBindings } from "./types";
+import { TAG_DESCRIPTIONS, VERSION } from "../helpers/constants";
+import type { EnvBindings } from "../env";
 import {
   fetchOutputSchema,
   fetchToolArgsShape,
   handleFetchGameData,
-} from "./tools/fetch-game-data";
+} from "../tools/fetch-game-data";
 import {
   executeOutputSchema,
   executeToolArgsShape,
   handleExecuteCalculation,
-} from "./tools/execute-calculation";
+} from "../tools/execute-calculation";
 import {
   dataAnalysisOutputSchema,
   dataAnalysisToolArgsShape,
   handleDataAnalysis,
-} from "./tools/data-analysis";
+} from "../tools/data-analysis";
 
 export class GameDataAgent extends McpAgent<EnvBindings> {
   server = new McpServer({

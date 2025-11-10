@@ -6,6 +6,6 @@
     "emitDeclarationOnly": true,
     "composite": false
   },
-  "include": ["src"],
+  "include": ["src", "../mcp/src/helpers/calculations.ts"],
   "exclude": ["src/**/*.test.ts"]
 }

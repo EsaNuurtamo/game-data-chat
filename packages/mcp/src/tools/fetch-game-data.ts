@@ -1,12 +1,18 @@
-import { buildDatasetKey, fetchFiltersSchema, shouldRefresh } from "@game-data/db";
+import {
+  buildDatasetKey,
+  fetchFiltersSchema,
+  readDataset,
+  shouldRefresh,
+  writeDataset,
+} from "@game-data/db";
 import { z } from "zod";
 
-import { fetchAggregateDataset, readDataset, writeDataset } from "../datasets";
-import type { EnvBindings } from "../types";
+import { fetchAggregateDataset } from "../data/datasets";
+import type { EnvBindings } from "../env";
 
 export const fetchToolArgsShape = {
   filters: fetchFiltersSchema,
-  force: z.boolean().optional()
+  force: z.boolean().optional(),
 } as const;
 
 const fetchInputSchema = z.object(fetchToolArgsShape);
@@ -19,7 +25,7 @@ const filtersOutputSchema = z.object({
   releasedFrom: z.string().nullable().optional(),
   releasedTo: z.string().nullable().optional(),
   page: z.number(),
-  pageSize: z.number()
+  pageSize: z.number(),
 });
 
 export const fetchOutputSchema = z.object({
@@ -30,7 +36,7 @@ export const fetchOutputSchema = z.object({
   totalItems: z.number(),
   fetchedAt: z.string(),
   expiresAt: z.string(),
-  filters: filtersOutputSchema
+  filters: filtersOutputSchema,
 });
 
 export type FetchInput = z.infer<typeof fetchInputSchema>;
@@ -66,7 +72,7 @@ export async function handleFetchGameData(
       datasetKey,
       pagesFetched: dataset.totalPages,
       totalItems: dataset.items.length,
-      cacheStatus
+      cacheStatus,
     })
   );
 
@@ -78,6 +84,6 @@ export async function handleFetchGameData(
     totalItems: dataset.items.length,
     fetchedAt: dataset.fetchedAt,
     expiresAt: dataset.expiresAt,
-    filters: dataset.filters
+    filters: dataset.filters,
   });
 }

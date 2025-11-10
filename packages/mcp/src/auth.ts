@@ -1,4 +1,4 @@
-import { EnvBindings } from "./types";
+import { EnvBindings } from "./env";
 
 const textEncoder = new TextEncoder();
 

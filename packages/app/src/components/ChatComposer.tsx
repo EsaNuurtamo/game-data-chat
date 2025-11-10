@@ -9,6 +9,8 @@ interface ChatComposerProps {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onStop: () => void;
   isStreaming?: boolean;
+  onClearHistory: () => void;
+  canClearHistory: boolean;
 }
 
 export function ChatComposer({
@@ -17,6 +19,8 @@ export function ChatComposer({
   onSubmit,
   onStop,
   isStreaming,
+  onClearHistory,
+  canClearHistory,
 }: ChatComposerProps) {
   const dataAnalysisEnabled = useDataAnalysisStore((state) => state.enabled);
   const toggleDataAnalysis = useDataAnalysisStore((state) => state.toggle);
@@ -32,6 +36,8 @@ export function ChatComposer({
       onChange={onChange}
       onSubmit={onSubmit}
       onStop={onStop}
+      onClearHistory={onClearHistory}
+      canClearHistory={canClearHistory}
     />
   );
 }

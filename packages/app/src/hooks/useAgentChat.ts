@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chat, useChat, type UseChatHelpers } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 
@@ -6,6 +6,7 @@ import type { AgentUIMessage } from "@/types/Agent";
 import { useThinkingStore } from "@/state/thinking-store";
 import { buildThinkingRuns } from "@/utils/thinking";
 import { useDataAnalysisStore } from "@/state/data-analysis-store";
+import { useChatHistoryStore } from "@/state/chat-history-store";
 
 const SUGGESTED_PROMPTS = [
   "What genre had most games in March 2025?",
@@ -29,9 +30,14 @@ export interface UseAgentChatResult {
   isStreaming: boolean;
   suggestedPrompts: string[];
   onSelectSuggestion: (prompt: string) => void;
+  hasHistory: boolean;
+  clearHistory: () => void;
 }
 
 export function useAgentChat(): UseAgentChatResult {
+  const persistedMessages = useChatHistoryStore((state) => state.messages);
+  const persistMessages = useChatHistoryStore((state) => state.setMessages);
+  const clearPersistedMessages = useChatHistoryStore((state) => state.clear);
   const transport = useMemo(
     () =>
       new DefaultChatTransport<AgentUIMessage>({
@@ -67,20 +73,46 @@ export function useAgentChat(): UseAgentChatResult {
     [transport]
   );
 
-  const { messages, sendMessage, stop, status, error, clearError } =
-    useChat<AgentUIMessage>({ chat });
+  const {
+    messages,
+    sendMessage,
+    stop,
+    status,
+    error,
+    clearError,
+    setMessages,
+  } = useChat<AgentUIMessage>({ chat });
   const setRunsFromMessages = useThinkingStore(
     (state) => state.setFromMessages
   );
 
   const [input, setInput] = useState("");
+  const hasHydratedHistoryRef = useRef(false);
 
   useEffect(() => {
     const { runs, currentRunId } = buildThinkingRuns(messages);
     setRunsFromMessages(runs, currentRunId);
   }, [messages, setRunsFromMessages]);
 
+  useEffect(() => {
+    if (hasHydratedHistoryRef.current) {
+      return;
+    }
+    if (persistedMessages.length > 0) {
+      setMessages((current) => (current.length ? current : persistedMessages));
+    }
+    hasHydratedHistoryRef.current = true;
+  }, [persistedMessages, setMessages]);
+
+  useEffect(() => {
+    if (!hasHydratedHistoryRef.current) {
+      return;
+    }
+    persistMessages(messages);
+  }, [messages, persistMessages]);
+
   const isStreaming = status === "streaming" || status === "submitted";
+  const hasHistory = messages.length > 0 || persistedMessages.length > 0;
 
   const handleSubmit = useCallback(
     async (event: { preventDefault?: () => void }) => {
@@ -105,12 +137,35 @@ export function useAgentChat(): UseAgentChatResult {
     [isStreaming]
   );
 
+  const handleStop = useCallback(() => {
+    stop();
+    setMessages((current) => {
+      if (!current.length) {
+        return current;
+      }
+      const next = [...current];
+      const last = next[next.length - 1];
+      if (last?.role === "assistant") {
+        next.pop();
+        return next;
+      }
+      return current;
+    });
+  }, [setMessages, stop]);
+
+  const clearHistory = useCallback(() => {
+    clearPersistedMessages();
+    setMessages([]);
+    setRunsFromMessages({}, null);
+    setInput("");
+  }, [clearPersistedMessages, setMessages, setRunsFromMessages]);
+
   return {
     input,
     setInput,
     sendMessage,
     handleSubmit,
-    stop,
+    stop: handleStop,
     clearError,
     status,
     error,
@@ -118,5 +173,7 @@ export function useAgentChat(): UseAgentChatResult {
     isStreaming,
     suggestedPrompts: SUGGESTED_PROMPTS,
     onSelectSuggestion,
+    hasHistory,
+    clearHistory,
   };
 }

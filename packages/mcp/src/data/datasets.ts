@@ -1,6 +1,7 @@
 import {
   DATASET_VERSION,
   DEFAULT_DATASET_TTL_MS,
+  duplicateFilters,
   kvDatasetRecordSchema,
 } from "@game-data/db";
 import type {
@@ -10,13 +11,9 @@ import type {
 } from "@game-data/db";
 import { z } from "zod";
 
-import {
-  CACHE_TTL_SECONDS,
-  RAWG_API_BASE,
-  RAWG_RESULT_HARD_LIMIT,
-} from "./constants";
-import type { EnvBindings } from "./types";
-import { safeReadError } from "./utils";
+import { RAWG_API_BASE, RAWG_RESULT_HARD_LIMIT } from "../helpers/constants";
+import type { EnvBindings } from "../env";
+import { safeReadError } from "../helpers/utils";
 import { resolveParentPlatformIds, resolvePlatformIds } from "./platforms";
 
 const rawgResponseSchema = z.object({
@@ -87,47 +84,6 @@ export async function fetchAggregateDataset(
     expiresAt: freshest.expiresAt,
     items: dedupedItems,
     version: DATASET_VERSION,
-  };
-}
-
-export async function readDataset(
-  kv: EnvBindings["RAWG_CACHE"],
-  key: string
-): Promise<KvDatasetRecord | null> {
-  const stored = await kv.get(key, { type: "json" });
-  if (!stored) {
-    return null;
-  }
-  const parsed = kvDatasetRecordSchema.safeParse(stored);
-  if (!parsed.success || parsed.data.version !== DATASET_VERSION) {
-    await kv.delete(key);
-    return null;
-  }
-  return parsed.data;
-}
-
-export async function writeDataset(
-  kv: EnvBindings["RAWG_CACHE"],
-  key: string,
-  record: KvDatasetRecord
-): Promise<void> {
-  await kv.put(key, JSON.stringify(record), {
-    expirationTtl: CACHE_TTL_SECONDS,
-  });
-}
-
-export function duplicateFilters(
-  filters: CanonicalizedFilters
-): CanonicalizedFilters {
-  return {
-    genres: [...filters.genres],
-    platforms: [...filters.platforms],
-    parentPlatforms: [...filters.parentPlatforms],
-    tags: [...filters.tags],
-    releasedFrom: filters.releasedFrom,
-    releasedTo: filters.releasedTo,
-    page: filters.page,
-    pageSize: filters.pageSize,
   };
 }
 

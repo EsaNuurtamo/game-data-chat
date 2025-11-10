@@ -48,6 +48,7 @@ export async function POST(req: Request): Promise<Response> {
       apiKey,
       modelName: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
       dataAnalysisEnabled,
+      signal: req.signal,
     });
   } catch (error) {
     console.error("Agent invocation failed", error);

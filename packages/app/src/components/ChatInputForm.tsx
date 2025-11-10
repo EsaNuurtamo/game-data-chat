@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { SendHorizonal, Sparkles } from "lucide-react";
+import { SendHorizonal, Sparkles, Trash2 } from "lucide-react";
 
 interface ChatInputFormProps {
   value: string;
@@ -11,6 +11,8 @@ interface ChatInputFormProps {
   onChange: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void> | void;
   onStop: () => void;
+  onClearHistory: () => void;
+  canClearHistory: boolean;
 }
 
 export function ChatInputForm({
@@ -23,6 +25,8 @@ export function ChatInputForm({
   onChange,
   onSubmit,
   onStop,
+  onClearHistory,
+  canClearHistory,
 }: ChatInputFormProps) {
   return (
     <form onSubmit={onSubmit} className="relative">
@@ -46,6 +50,15 @@ export function ChatInputForm({
               className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-700/70 bg-zinc-900 text-xs font-semibold uppercase tracking-wider text-zinc-200 transition hover:border-rose-500/60 hover:text-rose-200 disabled:cursor-not-allowed disabled:border-zinc-800 disabled:text-zinc-600"
             >
               ⏹
+            </button>
+            <button
+              type="button"
+              onClick={onClearHistory}
+              disabled={!canClearHistory}
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-700/70 bg-zinc-900 text-xs font-semibold uppercase tracking-wider text-zinc-200 transition hover:border-amber-500/60 hover:text-amber-200 disabled:cursor-not-allowed disabled:border-zinc-800 disabled:text-zinc-600"
+              aria-label="Clear conversation"
+            >
+              <Trash2 className="h-4 w-4" />
             </button>
             <button
               type="button"

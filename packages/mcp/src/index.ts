@@ -1,14 +1,11 @@
 import type { ExecutionContext } from "@cloudflare/workers-types";
-import { DATASET_VERSION } from "@game-data/db";
-import { proxyToSandbox, Sandbox } from "@cloudflare/sandbox";
-
-import { GameDataAgent } from "./agent";
+import { DATASET_VERSION, readDataset } from "@game-data/db";
+import { GameDataAgent } from "./ai/mcp-agent";
 import { isRequestAuthorized } from "./auth";
-import { VERSION } from "./constants";
-import { readDataset } from "./datasets";
-import type { WorkerEnv } from "./types";
+import { VERSION } from "./helpers/constants";
+import type { WorkerEnv } from "./env";
 
-export { GameDataAgent } from "./agent";
+export { GameDataAgent } from "./ai/mcp-agent";
 export { Sandbox } from "@cloudflare/sandbox";
 
 const protectedPaths = new Set(["/mcp", "/sse", "/sse/message"]);

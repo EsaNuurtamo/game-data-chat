@@ -1,12 +1,12 @@
 import { getSandbox, type Sandbox } from "@cloudflare/sandbox";
 import type { DurableObjectNamespace } from "@cloudflare/workers-types";
-import { shouldRefresh } from "@game-data/db";
+import { readDataset, shouldRefresh, writeDataset } from "@game-data/db";
 import { z } from "zod";
 
-import { generateAnalysisCode } from "../code-generation";
-import { fetchAggregateDataset, readDataset, writeDataset } from "../datasets";
+import { generateAnalysisCode } from "../ai/code-generation";
+import { fetchAggregateDataset } from "../data/datasets";
 import { executeInSandbox } from "../sandbox";
-import type { EnvBindings } from "../types";
+import type { EnvBindings } from "../env";
 
 export const dataAnalysisToolArgsShape = {
   datasetId: z.string(),

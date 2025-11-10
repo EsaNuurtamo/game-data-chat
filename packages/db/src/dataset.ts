@@ -41,6 +41,16 @@ export const kvDatasetRecordSchema = datasetMetadataSchema.extend({
   version: z.string(),
 });
 
+export interface JsonKVNamespace {
+  get: (key: string, options?: { type: "json" }) => Promise<unknown>;
+  put: (
+    key: string,
+    value: string,
+    options?: { expirationTtl?: number }
+  ) => Promise<void>;
+  delete: (key: string) => Promise<void>;
+}
+
 const textEncoder = new TextEncoder();
 
 async function sha256Hex(input: string): Promise<string> {
@@ -106,7 +116,7 @@ export function setDatasetExpiry(now: Date = new Date()): {
 }
 
 export async function readDataset(
-  kv: { get: (key: string, options?: { type: "json" }) => Promise<unknown>; delete: (key: string) => Promise<void> },
+  kv: Pick<JsonKVNamespace, "get" | "delete">,
   key: string
 ): Promise<KvDatasetRecord | null> {
   const stored = await kv.get(key, { type: "json" });
@@ -119,4 +129,18 @@ export async function readDataset(
     return null;
   }
   return parsed.data;
+}
+
+const DEFAULT_CACHE_TTL_SECONDS = Math.floor(DEFAULT_DATASET_TTL_MS / 1000);
+
+export async function writeDataset(
+  kv: Pick<JsonKVNamespace, "put">,
+  key: string,
+  record: KvDatasetRecord,
+  options?: { expirationTtlSeconds?: number }
+): Promise<void> {
+  await kv.put(key, JSON.stringify(record), {
+    expirationTtl:
+      options?.expirationTtlSeconds ?? DEFAULT_CACHE_TTL_SECONDS,
+  });
 }

@@ -5,10 +5,10 @@ import {
   PLATFORM_CACHE_TTL_SECONDS,
   PLATFORM_CACHE_VERSION,
   PLATFORM_DIRECTORY_KEY,
-  RAWG_PLATFORMS_BASE
-} from "./constants";
-import { EnvBindings } from "./types";
-import { safeReadError } from "./utils";
+  RAWG_PLATFORMS_BASE,
+} from "../helpers/constants";
+import { EnvBindings } from "../env";
+import { safeReadError } from "../helpers/utils";
 
 export type PlatformSummary = {
   id: number;
@@ -26,21 +26,21 @@ export type PlatformDirectoryRecord = {
 const rawgPlatformSchema = z.object({
   id: z.number(),
   slug: z.string(),
-  name: z.string()
+  name: z.string(),
 });
 
 const rawgPlatformResponseSchema = z.object({
   count: z.number(),
   next: z.string().nullable(),
   previous: z.string().nullable(),
-  results: z.array(rawgPlatformSchema)
+  results: z.array(rawgPlatformSchema),
 });
 
 const platformDirectoryRecordSchema = z.object({
   version: z.string(),
   fetchedAt: z.string(),
   expiresAt: z.string(),
-  platforms: z.array(rawgPlatformSchema)
+  platforms: z.array(rawgPlatformSchema),
 });
 
 const PARENT_PLATFORM_SLUG_TO_ID: Record<string, string> = {
@@ -62,7 +62,7 @@ const PARENT_PLATFORM_SLUG_TO_ID: Record<string, string> = {
   "3do": "12",
   "neo-geo": "13",
   web: "14",
-  browser: "14"
+  browser: "14",
 };
 
 export async function resolvePlatformIds(
@@ -105,7 +105,7 @@ export async function resolvePlatformIds(
       console.warn(
         "[mcp] unresolved_platform",
         JSON.stringify({
-          input: trimmed
+          input: trimmed,
         })
       );
     }
@@ -133,14 +133,15 @@ export function resolveParentPlatformIds(parentFilters: string[]): string[] {
     const normalized = normalizeFilterValue(trimmed);
     const lower = trimmed.toLowerCase();
     const resolvedId =
-      PARENT_PLATFORM_SLUG_TO_ID[normalized] ?? PARENT_PLATFORM_SLUG_TO_ID[lower];
+      PARENT_PLATFORM_SLUG_TO_ID[normalized] ??
+      PARENT_PLATFORM_SLUG_TO_ID[lower];
     if (resolvedId) {
       resolved.add(resolvedId);
     } else {
       console.warn(
         "[mcp] unresolved_parent_platform",
         JSON.stringify({
-          input: trimmed
+          input: trimmed,
         })
       );
     }
@@ -149,12 +150,19 @@ export function resolveParentPlatformIds(parentFilters: string[]): string[] {
   return Array.from(resolved);
 }
 
-async function getPlatformDirectory(env: EnvBindings): Promise<PlatformDirectoryRecord> {
-  const cached = await env.RAWG_CACHE.get(PLATFORM_DIRECTORY_KEY, { type: "json" });
+async function getPlatformDirectory(
+  env: EnvBindings
+): Promise<PlatformDirectoryRecord> {
+  const cached = await env.RAWG_CACHE.get(PLATFORM_DIRECTORY_KEY, {
+    type: "json",
+  });
   if (cached) {
     const parsed = platformDirectoryRecordSchema.safeParse(cached);
     if (parsed.success) {
-      if (parsed.data.version === PLATFORM_CACHE_VERSION && !shouldRefreshDirectory(parsed.data)) {
+      if (
+        parsed.data.version === PLATFORM_CACHE_VERSION &&
+        !shouldRefreshDirectory(parsed.data)
+      ) {
         return parsed.data;
       }
     }
@@ -162,16 +170,21 @@ async function getPlatformDirectory(env: EnvBindings): Promise<PlatformDirectory
 
   const record = await fetchPlatformDirectory(env);
   await env.RAWG_CACHE.put(PLATFORM_DIRECTORY_KEY, JSON.stringify(record), {
-    expirationTtl: PLATFORM_CACHE_TTL_SECONDS
+    expirationTtl: PLATFORM_CACHE_TTL_SECONDS,
   });
   return record;
 }
 
-function shouldRefreshDirectory(record: PlatformDirectoryRecord, now: Date = new Date()): boolean {
+function shouldRefreshDirectory(
+  record: PlatformDirectoryRecord,
+  now: Date = new Date()
+): boolean {
   return new Date(record.expiresAt).getTime() <= now.getTime();
 }
 
-async function fetchPlatformDirectory(env: EnvBindings): Promise<PlatformDirectoryRecord> {
+async function fetchPlatformDirectory(
+  env: EnvBindings
+): Promise<PlatformDirectoryRecord> {
   if (!env.RAWG_API_KEY) {
     throw new Error("RAWG_API_KEY is not configured");
   }
@@ -181,16 +194,20 @@ async function fetchPlatformDirectory(env: EnvBindings): Promise<PlatformDirecto
 
   while (nextUrl) {
     const response = await fetch(nextUrl, {
-      headers: { Accept: "application/json" }
+      headers: { Accept: "application/json" },
     });
     if (!response.ok) {
       const message = await safeReadError(response);
-      throw new Error(`RAWG platforms request failed (${response.status}): ${message}`);
+      throw new Error(
+        `RAWG platforms request failed (${response.status}): ${message}`
+      );
     }
     const json: unknown = await response.json();
     const parsed = rawgPlatformResponseSchema.safeParse(json);
     if (!parsed.success) {
-      throw new Error(`Failed to parse RAWG platforms response: ${parsed.error.message}`);
+      throw new Error(
+        `Failed to parse RAWG platforms response: ${parsed.error.message}`
+      );
     }
 
     platforms.push(...parsed.data.results);
@@ -213,8 +230,10 @@ async function fetchPlatformDirectory(env: EnvBindings): Promise<PlatformDirecto
   return {
     version: PLATFORM_CACHE_VERSION,
     fetchedAt: now.toISOString(),
-    expiresAt: new Date(now.getTime() + PLATFORM_CACHE_TTL_SECONDS * 1000).toISOString(),
-    platforms
+    expiresAt: new Date(
+      now.getTime() + PLATFORM_CACHE_TTL_SECONDS * 1000
+    ).toISOString(),
+    platforms,
   };
 }
 

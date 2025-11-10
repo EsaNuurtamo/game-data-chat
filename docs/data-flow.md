@@ -33,7 +33,7 @@ The resulting `CanonicalizedFilters` object is stored inside every dataset recor
 
 ### In-Memory Aggregation
 
-`fetchAggregateDataset()` (`packages/mcp/src/datasets.ts`) is the single entry point for RAWG data:
+`fetchAggregateDataset()` (`packages/mcp/src/data/datasets.ts`) is the single entry point for RAWG data:
 
 1. Iterates `page = 1…N`, mutating a copy of `CanonicalizedFilters` so each RAWG request only changes the page number.  
 2. Calls `fetchRawgDataset()` per page, which adds platform IDs via `resolvePlatformIds()` / `resolveParentPlatformIds()` and enforces the `RAWG_RESULT_HARD_LIMIT` (2,000 games).  

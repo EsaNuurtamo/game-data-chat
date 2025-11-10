@@ -1,8 +1,14 @@
-import { runCalculation, shouldRefresh } from "@game-data/db";
+import {
+  DatasetMetadata,
+  readDataset,
+  runJsonQuery,
+  shouldRefresh,
+  writeDataset,
+} from "@game-data/db";
 import { z } from "zod";
 
-import { fetchAggregateDataset, readDataset, writeDataset } from "../datasets";
-import type { EnvBindings } from "../types";
+import { fetchAggregateDataset } from "../data/datasets";
+import type { EnvBindings } from "../env";
 
 export const executeToolArgsShape = {
   datasetId: z.string(),
@@ -67,4 +73,25 @@ export async function handleExecuteCalculation(
     fetchedAt: latestDataset.fetchedAt,
     expiresAt: latestDataset.expiresAt,
   });
+}
+
+export interface ExecuteCalculationInput {
+  dataset: DatasetMetadata;
+  query: string;
+}
+
+export interface ExecuteCalculationResult {
+  itemsProcessed: number;
+  value: unknown;
+}
+
+export function runCalculation({
+  dataset,
+  query,
+}: ExecuteCalculationInput): ExecuteCalculationResult {
+  const value = runJsonQuery(dataset, query);
+  return {
+    itemsProcessed: dataset.items.length,
+    value,
+  };
 }
