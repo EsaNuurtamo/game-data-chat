@@ -25,6 +25,10 @@ export async function POST(req: Request): Promise<Response> {
     );
   }
 
+  const dataAnalysisEnabled =
+    req.headers.get("X-Data-Analysis-Enabled") === "true";
+  console.log("dataAnalysisEnabled", dataAnalysisEnabled);
+
   const parsedMessages = await parseMessages(body);
   if (!parsedMessages.ok) {
     return parsedMessages.response;
@@ -43,6 +47,7 @@ export async function POST(req: Request): Promise<Response> {
       messages: parsedMessages.messages,
       apiKey,
       modelName: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+      dataAnalysisEnabled,
     });
   } catch (error) {
     console.error("Agent invocation failed", error);
@@ -59,8 +64,7 @@ export async function POST(req: Request): Promise<Response> {
 async function parseMessages(
   body: RequestBody
 ): Promise<
-  | { ok: true; messages: AgentUIMessage[] }
-  | { ok: false; response: Response }
+  { ok: true; messages: AgentUIMessage[] } | { ok: false; response: Response }
 > {
   if (Array.isArray(body.messages)) {
     try {
@@ -107,7 +111,8 @@ async function parseMessages(
     ok: false,
     response: jsonResponse(
       {
-        error: "Provide either `messages` (array) or a non-empty `prompt` string.",
+        error:
+          "Provide either `messages` (array) or a non-empty `prompt` string.",
       },
       { status: 400 }
     ),

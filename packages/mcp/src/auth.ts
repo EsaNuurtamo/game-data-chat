@@ -64,7 +64,6 @@ export function isRequestAuthorized(
   env: EnvBindings
 ): boolean {
   const configuredKeys = parseConfiguredApiKeys(env.MCP_API_KEYS);
-  console.log("configuredKeys", configuredKeys);
 
   if (configuredKeys.length === 0) {
     return true;

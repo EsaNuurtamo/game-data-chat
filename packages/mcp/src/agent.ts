@@ -13,6 +13,11 @@ import {
   executeToolArgsShape,
   handleExecuteCalculation,
 } from "./tools/execute-calculation";
+import {
+  dataAnalysisOutputSchema,
+  dataAnalysisToolArgsShape,
+  handleDataAnalysis,
+} from "./tools/data-analysis";
 
 export class GameDataAgent extends McpAgent<EnvBindings> {
   server = new McpServer({
@@ -99,6 +104,55 @@ export class GameDataAgent extends McpAgent<EnvBindings> {
                 `query=${queryPreview}`,
                 `itemsProcessed=${structured.itemsProcessed}`,
                 `value=${JSON.stringify(structured.value)}`,
+              ].join(" | "),
+            },
+          ],
+          structuredContent: structured,
+        };
+      }
+    );
+
+    this.server.tool(
+      "data_analysis",
+      [
+        "Run Python-based data analysis on a cached RAWG dataset using AI-generated code.",
+        "This tool generates Python code to answer your question, executes it in a secure sandbox, and returns the results.",
+        "Pass { datasetId, question } where question describes what analysis you want to perform.",
+        "The tool will automatically generate Python code using pandas, numpy, and other data analysis libraries.",
+        "Optional: contextId for resuming previous analysis sessions, fresh to force dataset refresh, timeout to customize execution timeout (default 60s).",
+      ].join(" "),
+      dataAnalysisToolArgsShape,
+      async (args) => {
+        const structured = dataAnalysisOutputSchema.parse(
+          await handleDataAnalysis(
+            {
+              datasetId: args.datasetId,
+              question: args.question,
+              contextId: args.contextId,
+              fresh: args.fresh ?? false,
+              timeout: args.timeout,
+            },
+            this.bindings
+          )
+        );
+
+        const questionPreview =
+          structured.question.length > 80
+            ? `${structured.question.slice(0, 77)}…`
+            : structured.question;
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: [
+                `datasetId=${structured.datasetId}`,
+                `question=${questionPreview}`,
+                `success=${structured.success}`,
+                `contextId=${structured.contextId}`,
+                structured.success
+                  ? `result=${JSON.stringify(structured.result)}`
+                  : `error=${structured.error?.value || "Unknown error"}`,
               ].join(" | "),
             },
           ],

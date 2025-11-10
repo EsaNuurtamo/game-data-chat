@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   DATASET_NAMESPACE_PREFIX,
+  DATASET_VERSION,
   DEFAULT_DATASET_TTL_MS,
 } from "./constants";
 import {
@@ -102,4 +103,20 @@ export function setDatasetExpiry(now: Date = new Date()): {
     fetchedAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + DEFAULT_DATASET_TTL_MS).toISOString(),
   };
+}
+
+export async function readDataset(
+  kv: { get: (key: string, options?: { type: "json" }) => Promise<unknown>; delete: (key: string) => Promise<void> },
+  key: string
+): Promise<KvDatasetRecord | null> {
+  const stored = await kv.get(key, { type: "json" });
+  if (!stored) {
+    return null;
+  }
+  const parsed = kvDatasetRecordSchema.safeParse(stored);
+  if (!parsed.success || parsed.data.version !== DATASET_VERSION) {
+    await kv.delete(key);
+    return null;
+  }
+  return parsed.data;
 }

@@ -5,6 +5,7 @@ import {
   stepCountIs,
   convertToModelMessages,
   UI_MESSAGE_STREAM_HEADERS,
+  Tool,
 } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 
@@ -18,18 +19,23 @@ interface ConversationAgentOptions {
   messages: AgentUIMessage[];
   apiKey: string;
   modelName?: string;
+  dataAnalysisEnabled?: boolean;
 }
 
 export async function createConversationAgentResponse({
   messages,
   apiKey,
   modelName = "gpt-5-mini",
+  dataAnalysisEnabled = false,
 }: ConversationAgentOptions): Promise<Response> {
   const openai = createOpenAI({ apiKey });
   const client = await createMcpClient();
 
   try {
-    const tools = await client.tools();
+    const tools = selectToolsForRun({
+      tools: await client.tools(),
+      dataAnalysisEnabled,
+    });
     const closeClient = async () => {
       try {
         await client.close();
@@ -51,7 +57,7 @@ export async function createConversationAgentResponse({
         },
       },
       maxRetries: 2,
-      stopWhen: stepCountIs(12),
+      stopWhen: stepCountIs(10),
       onFinish: closeClient,
       onError: async () => {
         await closeClient();
@@ -127,4 +133,25 @@ export async function createConversationAgentResponse({
       );
     throw error;
   }
+}
+
+function selectToolsForRun({
+  tools,
+  dataAnalysisEnabled,
+}: {
+  tools: Record<string, Tool>;
+  dataAnalysisEnabled: boolean;
+}): Record<string, Tool> {
+  const allowed = new Set([
+    "fetch_game_data",
+    dataAnalysisEnabled ? "data_analysis" : "execute_calculation",
+  ]);
+
+  Object.keys(tools).forEach((toolName) => {
+    if (!allowed.has(toolName)) {
+      delete tools[toolName];
+    }
+  });
+
+  return tools;
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import { type FormEvent } from "react";
 
 import { ChatComposer } from "@/components/ChatComposer";

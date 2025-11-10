@@ -10,9 +10,12 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.59",
+    "@cloudflare/sandbox": "^0.1.4",
     "@game-data/db": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.20.2",
     "agents": "0.2.19",
+    "ai": "^5.0.78",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.5"
   },

@@ -4,11 +4,20 @@ import { DEFAULT_PAGE_SIZE, SUPPORTED_TAGS } from "./constants";
 
 export const fetchFiltersSchema = z.object({
   genres: z.array(z.string()).optional(),
-  platforms: z.array(z.string()).optional(),
-  parentPlatforms: z.array(z.string()).optional(),
-  tags: z.array(z.string()).optional(),
-  releasedFrom: z.string().optional(),
-  releasedTo: z.string().optional(),
+  platforms: z
+    .array(z.string())
+    .optional()
+    .describe("platform ie. playstation5"),
+  parentPlatforms: z
+    .array(z.string())
+    .optional()
+    .describe("parent platform ie. xbox or playstation (all generations"),
+  tags: z
+    .array(z.string())
+    .optional()
+    .describe("tag ie. singleplayer, exclusive"),
+  releasedFrom: z.string().optional().describe("datestring ie. 2020-01-01"),
+  releasedTo: z.string().optional().describe("datestring ie. 2020-01-01"),
   page: z.number().min(1).max(40).optional(),
   pageSize: z.number().min(1).max(DEFAULT_PAGE_SIZE).optional(),
 });

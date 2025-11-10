@@ -1,5 +1,6 @@
 import type { ExecutionContext } from "@cloudflare/workers-types";
 import { DATASET_VERSION } from "@game-data/db";
+import { proxyToSandbox, Sandbox } from "@cloudflare/sandbox";
 
 import { GameDataAgent } from "./agent";
 import { isRequestAuthorized } from "./auth";
@@ -8,6 +9,7 @@ import { readDataset } from "./datasets";
 import type { WorkerEnv } from "./types";
 
 export { GameDataAgent } from "./agent";
+export { Sandbox } from "@cloudflare/sandbox";
 
 const protectedPaths = new Set(["/mcp", "/sse", "/sse/message"]);
 
@@ -18,8 +20,6 @@ export default {
     ctx: ExecutionContext
   ): Promise<Response> {
     const url = new URL(request.url);
-
-    console.log("request", request.headers.get("authorization"));
 
     if (
       protectedPaths.has(url.pathname) &&
@@ -56,12 +56,17 @@ export default {
     }
 
     if (url.pathname.startsWith("/datasets/")) {
-      const datasetId = decodeURIComponent(url.pathname.replace(/^\/datasets\//, "").trim());
+      const datasetId = decodeURIComponent(
+        url.pathname.replace(/^\/datasets\//, "").trim()
+      );
       if (!datasetId) {
-        return new Response(JSON.stringify({ error: "Dataset id is required" }), {
-          status: 400,
-          headers: { "content-type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "Dataset id is required" }),
+          {
+            status: 400,
+            headers: { "content-type": "application/json" },
+          }
+        );
       }
 
       try {
@@ -82,10 +87,13 @@ export default {
         });
       } catch (error) {
         console.error("Failed to read dataset", datasetId, error);
-        return new Response(JSON.stringify({ error: "Failed to read dataset" }), {
-          status: 500,
-          headers: { "content-type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "Failed to read dataset" }),
+          {
+            status: 500,
+            headers: { "content-type": "application/json" },
+          }
+        );
       }
     }
 

@@ -7,13 +7,20 @@ compatibility_flags = ["nodejs_compat"]
 port = 8787
 
 [durable_objects]
-bindings = [{ name = "MCP_OBJECT", class_name = "GameDataAgent" }]
+bindings = [{ name = "MCP_OBJECT", class_name = "GameDataAgent" }, { name = "Sandbox", class_name = "Sandbox" }]
 
 [vars]
+OPENAI_MODEL = "gpt-5-mini"
 
 [[migrations]]
-tag = "v1"
-new_sqlite_classes = ["GameDataAgent"]
+tag = "v2"
+new_sqlite_classes = ["Sandbox"]
+
+[[containers]]
+class_name = "Sandbox"
+image = "./Dockerfile"
+instance_type = "lite"
+max_instances = 1
 
 [observability]
 enabled = true

@@ -205,16 +205,16 @@ function logStreamPart(part: AgentTextStreamPart) {
     return;
   }
   try {
-    console.debug("[agent] stream part", {
-      type: part.type,
-      id: "id" in part ? part.id : undefined,
-      toolCallId: "toolCallId" in part ? part.toolCallId : undefined,
-      toolName: "toolName" in part ? part.toolName : undefined,
-      text:
-        part.type === "reasoning-delta"
-          ? (part.text ?? "").slice(0, 80)
-          : undefined,
-    });
+    // console.debug("[agent] stream part", {
+    //   type: part.type,
+    //   id: "id" in part ? part.id : undefined,
+    //   toolCallId: "toolCallId" in part ? part.toolCallId : undefined,
+    //   toolName: "toolName" in part ? part.toolName : undefined,
+    //   text:
+    //     part.type === "reasoning-delta"
+    //       ? (part.text ?? "").slice(0, 80)
+    //       : undefined,
+    // });
   } catch (logError) {
     console.warn("[agent] failed to log stream part", logError);
   }

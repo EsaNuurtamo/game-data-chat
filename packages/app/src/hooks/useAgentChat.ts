@@ -5,6 +5,7 @@ import { DefaultChatTransport } from "ai";
 import type { AgentUIMessage } from "@/types/Agent";
 import { useThinkingStore } from "@/state/thinking-store";
 import { buildThinkingRuns } from "@/utils/thinking";
+import { useDataAnalysisStore } from "@/state/data-analysis-store";
 
 const SUGGESTED_PROMPTS = [
   "What genre had most games in March 2025?",
@@ -35,6 +36,18 @@ export function useAgentChat(): UseAgentChatResult {
     () =>
       new DefaultChatTransport<AgentUIMessage>({
         api: "/api/agent",
+        fetch: async (url, options) => {
+          const headers = new Headers(options?.headers ?? undefined);
+          const headerValue = useDataAnalysisStore.getState().enabled
+            ? "true"
+            : "false";
+          headers.set("X-Data-Analysis-Enabled", headerValue);
+          const requestInit: RequestInit = {
+            ...(options ?? {}),
+            headers,
+          };
+          return fetch(url, requestInit);
+        },
       }),
     []
   );
@@ -54,14 +67,8 @@ export function useAgentChat(): UseAgentChatResult {
     [transport]
   );
 
-  const {
-    messages,
-    sendMessage,
-    stop,
-    status,
-    error,
-    clearError,
-  } = useChat<AgentUIMessage>({ chat });
+  const { messages, sendMessage, stop, status, error, clearError } =
+    useChat<AgentUIMessage>({ chat });
   const setRunsFromMessages = useThinkingStore(
     (state) => state.setFromMessages
   );
